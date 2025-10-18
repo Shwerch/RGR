@@ -41,14 +41,6 @@ std::string get_arg_value(const std::vector<std::string> &args,
     throw EXCEPTION("Аргумент " + long_name + " не указан");
 }
 
-CipherInterface parse_algorithm(const std::vector<std::string> &args) {
-    std::string value = get_arg_value(args, "--algorithm", "-a");
-    if (value == "aes" || value == "des" || value == "rava") {
-        return load_cipher(value);
-    }
-    throw EXCEPTION("Неизвестный алгоритм: " + value);
-}
-
 Mode parse_mode(const std::vector<std::string> &args) {
     std::string value = get_arg_value(args, "--mode", "-m");
     if (value == "encrypt" || value == "e") {

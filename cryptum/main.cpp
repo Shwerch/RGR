@@ -1,44 +1,16 @@
 #include <iostream>
 
-#ifdef _WIN32
-#include <windows.h>
-#define LIB_HANDLE HMODULE
-#define load_lib(name) LoadLibraryA(name)
-#define get_func(handle, name) GetProcAddress(handle, name)
-#define close_lib(handle) FreeLibrary(handle)
-#else
-#include <dlfcn.h>
-#define LIB_HANDLE void*
-#define load_lib(name) dlopen(name, RTLD_LAZY)
-#define get_func(handle, name) dlsym(handle, name)
-#define close_lib(handle) dlclose(handle)
-#endif
-
-typedef void (*PrintFuncType)();
+#include "../utils/library_loader.h"
+#include "../utils/exception.h"
 
 int main() {
-    const auto lib1_name =
-#ifdef _WIN32
-        "libaes.dll";
-#else
-            "libaes.so";
-#endif
+    const auto plaintext = new uint8_t[10];
+    const auto key = new uint8_t[32];
 
-    const LIB_HANDLE lib1_handle = load_lib(lib1_name);
-    if (!lib1_handle) {
-        std::cerr << "Error loading library " << lib1_name << std::endl;
-        return 1;
-    }
+    const auto library = DynamicLibrary("aes", "encrypt");
+    const auto result = library.function(plaintext, 10, key);
 
-    const auto print_func = reinterpret_cast<PrintFuncType>(get_func(lib1_handle, "aes"));
-    if (!print_func) {
-        std::cerr << "Error finding function aes" << std::endl;
-        close_lib(lib1_handle);
-        return 1;
-    }
-
-    print_func();
-
-    close_lib(lib1_handle);
+    std::cout << static_cast<unsigned>(plaintext[0]) << std::endl;
+    std::cout << static_cast<unsigned>(result[0]) << std::endl;
     return 0;
 }

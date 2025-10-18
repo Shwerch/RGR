@@ -9,8 +9,6 @@
 #endif
 
 extern "C" {
-    EXPORT std::vector<uint8_t> encrypt(const std::vector<uint8_t> &plaintext,
-                                        const std::vector<uint8_t> &key);
-    EXPORT std::vector<uint8_t> decrypt(const std::vector<uint8_t> &ciphertext,
-                                        const std::vector<uint8_t> &key);
+EXPORT uint8_t* encrypt(const uint8_t* plaintext_ptr, size_t size, const uint8_t* key_ptr);
+EXPORT uint8_t* decrypt(const uint8_t* ciphertext_ptr, size_t size, const uint8_t* key_ptr);
 }
