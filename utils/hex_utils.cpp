@@ -6,12 +6,10 @@
 #include <format>
 
 std::vector<uint8_t> parse_hex_to_vec(const std::string& hex_str, size_t N) {
-    if (hex_str.length() < N * 2) {
+    if (hex_str.length() < N * 2)
         throw std::runtime_error("Hex string too short");
-    }
-    if (hex_str.size() % 2 != 0) {
+    if (hex_str.size() % 2 != 0)
         throw std::runtime_error("Hex string length must be even");
-    }
     std::vector<uint8_t> result;
     result.reserve(N);
     for (size_t i = 0; i < N * 2; i += 2) {

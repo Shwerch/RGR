@@ -22,13 +22,13 @@
     #define MAKE_LIB_NAME(name) ("lib" + name + ".so")
 #endif
 
-typedef uint8_t* (*Function)(const uint8_t* text_ptr, size_t size, const uint8_t* key_ptr);
+using Function = uint8_t* (*)(const uint8_t* text_ptr, size_t size, const uint8_t* key_ptr);
 
-struct DynamicLibrary {
+struct Library {
 private:
     const LIB_HANDLE handle;
 public:
-    const Function function;
-    DynamicLibrary(const std::string &name, const std::string &func);
-    ~DynamicLibrary();
+    explicit Library(const std::string &name);
+    Function get_function(const std::string &func) const;
+    ~Library();
 };

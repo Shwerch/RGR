@@ -15,13 +15,9 @@ int main(const int argc, const char** argv) {
     const auto plaintext = new uint8_t[100];
     const auto key = new uint8_t[32];
 
-    const uint8_t* result;
-    try {
-        const auto library = DynamicLibrary("aes", "encrypt");
-        result = library.function(plaintext, 100, key);
-    } catch (const std::exception& e) {
-        std::cout << e.what() << std::endl;
-    }
+    const auto library = Library("aes");
+    const auto function = library.get_function("encrypt");
+    const auto result = function(plaintext, 100, key);
 
     std::cout << (plaintext[0] == result[0]) << std::endl;
     return 0;
