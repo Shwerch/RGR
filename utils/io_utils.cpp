@@ -1,6 +1,5 @@
 #include "io_utils.h"
 #include "hex_utils.h"
-#include "exception.h"
 #include <iostream>
 #include <string>
 
@@ -27,7 +26,7 @@ std::vector<uint8_t> input_bytes(size_t n) {
     if (bytes.size() > n) {
         bytes.resize(n);
     } else if (bytes.size() < n) {
-        throw EXCEPTION("Введено " + std::to_string(bytes.size()) + 
+        throw std::runtime_error("Введено " + std::to_string(bytes.size()) +
                        " байт, требуется " + std::to_string(n));
     }
 
@@ -53,5 +52,5 @@ std::vector<uint8_t> input_all_bytes() {
         }
     }
 
-    return std::vector<uint8_t>(input.begin(), input.end());
+    return {input.begin(), input.end()};
 }

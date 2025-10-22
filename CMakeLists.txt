@@ -1,20 +1,24 @@
 cmake_minimum_required(VERSION 4.0)
 project(Cryptum)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(MSVC)
+    add_compile_options(/utf-8)
+else()
+endif()
 
 include_directories(include)
 
 set(UTILS_SOURCES
-        utils/exception.cpp
-        utils/hex_utils.cpp
-        utils/rand_utils.cpp
         utils/filesystem.cpp
+        utils/hex_utils.cpp
         utils/io_utils.cpp
-        utils/string_utils.cpp
         utils/library_loader.cpp
         utils/parser.cpp
+        utils/rand_utils.cpp
+        utils/string_utils.cpp
 )
 
 set(AES_SOURCES

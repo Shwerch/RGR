@@ -1,48 +1,39 @@
 #include "filesystem.h"
-#include "exception.h"
 #include <fstream>
 
-std::vector<uint8_t> read_bytes(const std::string &path, size_t size) {
-    std::ifstream file(path, std::ios::binary);
-    if (!file.is_open()) {
-        throw EXCEPTION("Не удалось открыть файл: " + path);
+std::vector<uint8_t> read_n_bytes(const std::string& path, size_t N) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw std::runtime_error("Cannot open file: " + path);
+    std::vector<uint8_t> buffer;
+    buffer.resize(N);
+    in.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(N));
+    if (const auto read_count = static_cast<std::size_t>(in.gcount()); read_count < N) {
+        buffer.resize(read_count);
     }
-
-    std::vector<uint8_t> buffer(size);
-    file.read(reinterpret_cast<char*>(buffer.data()), size);
-    
-    if (!file) {
-        throw EXCEPTION("Не удалось прочитать " + std::to_string(size) + " байт из файла");
-    }
-
     return buffer;
 }
-
-std::vector<uint8_t> read_all_bytes(const std::string &path) {
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file.is_open()) {
-        throw EXCEPTION("Не удалось открыть файл: " + path);
+std::vector<uint8_t> read_all_bytes(const std::string& path) {
+    std::ifstream in(path, std::ios::binary | std::ios::ate);
+    if (!in) throw std::runtime_error("Cannot open file: " + path);
+    std::streamsize size = in.tellg();
+    in.seekg(0, std::ios::beg);
+    std::vector<uint8_t> buf(static_cast<std::size_t>(size));
+    if (size > 0) {
+        in.read(reinterpret_cast<char*>(buf.data()), size);
+        if (!in) throw std::runtime_error("Read failed: " + path);
     }
-
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::vector<uint8_t> buffer(size);
-    if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-        throw EXCEPTION("Не удалось прочитать файл: " + path);
-    }
-
-    return buffer;
+    return buf;
 }
-
 void write_bytes(const std::string &path, const std::vector<uint8_t> &data) {
-    std::ofstream file(path, std::ios::binary);
-    if (!file.is_open()) {
-        throw EXCEPTION("Не удалось открыть файл для записи: " + path);
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    if (!out) {
+        throw std::runtime_error("Cannot open file for writing: " + path);
     }
-
-    file.write(reinterpret_cast<const char*>(data.data()), data.size());
-    if (!file) {
-        throw EXCEPTION("Не удалось записать данные в файл: " + path);
+    if (!data.empty()) {
+        out.write(reinterpret_cast<const char*>(data.data()),
+                  static_cast<std::streamsize>(data.size()));
+        if (!out) {
+            throw std::runtime_error("Write failed: " + path);
+        }
     }
 }

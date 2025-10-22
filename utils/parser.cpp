@@ -1,10 +1,6 @@
 #include "parser.h"
-#include "exception.h"
 #include "string_utils.h"
 #include "rand_utils.h"
-#include "filesystem.h"
-#include "io_utils.h"
-#include "hex_utils.h"
 #include "library_loader.h"
 #include <iostream>
 #include <filesystem>
@@ -34,13 +30,14 @@ std::string get_arg_value(const std::vector<std::string> &args,
 
         if (!value.empty() && value[0] == '=') {
             return remove_prefix(value, "=");
-        } else if (value.empty() && i + 1 < args.size()) {
+        }
+        if (value.empty() && i + 1 < args.size()) {
             return args[i + 1];
         }
     }
-    throw EXCEPTION("Аргумент " + long_name + " не указан");
+    throw std::runtime_error("Аргумент " + long_name + " не указан");
 }
-
+/*
 Mode parse_mode(const std::vector<std::string> &args) {
     std::string value = get_arg_value(args, "--mode", "-m");
     if (value == "encrypt" || value == "e") {
@@ -48,7 +45,7 @@ Mode parse_mode(const std::vector<std::string> &args) {
     } else if (value == "decrypt" || value == "d") {
         return Mode::Decrypt;
     }
-    throw EXCEPTION("Неизвестный режим: " + value);
+    throw std::runtime_error("Неизвестный режим: " + value);
 }
 
 std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size) {
@@ -60,7 +57,7 @@ std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size
         return input_bytes(size);
     } else {
         if (!std::filesystem::exists(value)) {
-            throw EXCEPTION("Файл ключа не существует: " + value);
+            throw std::runtime_error("Файл ключа не существует: " + value);
         }
         return read_bytes(value, size);
     }
@@ -70,10 +67,10 @@ void parse_save_key(const std::vector<std::string> &args, const std::vector<uint
     try {
         std::string value = get_arg_value(args, "--save-key", "-s");
         if (std::filesystem::exists(value)) {
-            throw EXCEPTION("Файл для сохранения ключа уже существует: " + value);
+            throw std::runtime_error("Файл для сохранения ключа уже существует: " + value);
         }
         write_bytes(value, key);
-    } catch (const MyException &) {
+    } catch (const Mystd::runtime_error &) {
     }
 }
 
@@ -87,25 +84,25 @@ std::vector<uint8_t> parse_input(const std::vector<std::string> &args) {
             return parse_hex_all(value);
         } catch (...) {
             if (!std::filesystem::exists(value)) {
-                throw EXCEPTION("Файл входных данных не существует: " + value);
+                throw std::runtime_error("Файл входных данных не существует: " + value);
             }
             return read_all_bytes(value);
         }
     }
-}
+} */
 
 ParsedOutput parse_output(const std::vector<std::string> &args) {
-    std::string value = get_arg_value(args, "--output", "-o");
-    
-    if (value == "binary" || value == "bin") {
+    if (std::string value = get_arg_value(args, "--output", "-o"); value == "binary" || value == "bin") {
         return ParsedOutput{"", Output::Binary};
-    } else if (value == "text") {
-        return ParsedOutput{"", Output::Text};
-    } else if (value == "hex") {
-        return ParsedOutput{"", Output::Hex};
     } else {
+        if (value == "text") {
+            return ParsedOutput{"", Output::Text};
+        }
+        if (value == "hex") {
+            return ParsedOutput{"", Output::Hex};
+        }
         if (std::filesystem::exists(value)) {
-            throw EXCEPTION("Файл вывода уже существует: " + value);
+            throw std::runtime_error("Файл вывода уже существует: " + value);
         }
         return ParsedOutput{value, Output::File};
     }

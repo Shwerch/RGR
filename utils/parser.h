@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "cipher_interface.h"
 
 enum class Mode {
     Encrypt,

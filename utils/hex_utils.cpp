@@ -1,73 +1,34 @@
 #include "hex_utils.h"
-#include "exception.h"
-#include <sstream>
-#include <iomanip>
+#include <string>
+#include <vector>
+#include <cstdint>
+#include <stdexcept>
+#include <format>
 
-std::vector<uint8_t> parse_hex_to_vec(const std::string &hex_str, size_t n) {
-    std::string hex_clean;
-    for (char c : hex_str) {
-        if (!std::isspace(c)) {
-            hex_clean += c;
-        }
+std::vector<uint8_t> parse_hex_to_vec(const std::string& hex_str, size_t N) {
+    if (hex_str.length() < N * 2) {
+        throw std::runtime_error("Hex string too short");
     }
-
-    if (hex_clean.length() % 2 != 0) {
-        throw EXCEPTION("Hex строка должна содержать четное количество символов");
+    if (hex_str.size() % 2 != 0) {
+        throw std::runtime_error("Hex string length must be even");
     }
-
-    std::vector<uint8_t> bytes;
-    for (size_t i = 0; i < hex_clean.length(); i += 2) {
-        std::string byte_str = hex_clean.substr(i, 2);
-        uint8_t byte = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
-        bytes.push_back(byte);
+    std::vector<uint8_t> result;
+    result.reserve(N);
+    for (size_t i = 0; i < N * 2; i += 2) {
+        result.push_back(std::stoul(hex_str.substr(i, 2), nullptr, 16));
     }
-
-    if (bytes.size() < n) {
-        throw EXCEPTION("Hex содержит " + std::to_string(bytes.size()) + 
-                       " байт, требуется " + std::to_string(n));
-    }
-
-    bytes.resize(n);
-    return bytes;
+    return result;
 }
 
 std::vector<uint8_t> parse_hex_all(const std::string &hex_str) {
-    std::string hex_clean;
-    std::string input = hex_str;
-    
-    if (input.substr(0, 2) == "0x" || input.substr(0, 2) == "0X") {
-        input = input.substr(2);
-    }
-
-    for (char c : input) {
-        if (!std::isspace(c)) {
-            hex_clean += c;
-        }
-    }
-
-    if (hex_clean.length() % 2 != 0) {
-        throw EXCEPTION("Hex строка должна содержать четное количество символов");
-    }
-
-    std::vector<uint8_t> bytes;
-    for (size_t i = 0; i < hex_clean.length(); i += 2) {
-        std::string byte_str = hex_clean.substr(i, 2);
-        uint8_t byte = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
-        bytes.push_back(byte);
-    }
-
-    return bytes;
+    return parse_hex_to_vec(hex_str, hex_str.size() / 2);
 }
 
-std::string vector_to_hex_str(const std::vector<uint8_t> &bytes) {
-    std::ostringstream oss;
-    oss << "0x";
-    if (bytes.empty()) {
-        oss << "00";
-    } else {
-        for (uint8_t byte : bytes) {
-            oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
-        }
+std::string vector_to_hex_str(const std::vector<uint8_t>& bytes) {
+    std::string result;
+    result.reserve(bytes.size() * 2);
+    for (uint8_t b : bytes) {
+        result += std::format("{:02x}", b);
     }
-    return oss.str();
+    return result;
 }
