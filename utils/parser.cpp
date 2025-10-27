@@ -1,9 +1,13 @@
+#include <iostream>
+#include <filesystem>
+
 #include "parser.h"
 #include "string_utils.h"
 #include "rand_utils.h"
 #include "library_loader.h"
-#include <iostream>
-#include <filesystem>
+#include "filesystem.h"
+#include "hex_utils.h"
+#include "io_utils.h"
 
 bool has_arg(const std::vector<std::string> &args, const std::string &long_name, 
              const std::string &short_name) {
@@ -35,43 +39,60 @@ std::string get_arg_value(const std::vector<std::string> &args,
             return args[i + 1];
         }
     }
-    throw std::runtime_error("Аргумент " + long_name + " не указан");
+    throw std::runtime_error("argument " + long_name + " not specified");
 }
-/*
+
 Mode parse_mode(const std::vector<std::string> &args) {
     std::string value = get_arg_value(args, "--mode", "-m");
     if (value == "encrypt" || value == "e") {
         return Mode::Encrypt;
-    } else if (value == "decrypt" || value == "d") {
+    }
+    if (value == "decrypt" || value == "d") {
         return Mode::Decrypt;
     }
-    throw std::runtime_error("Неизвестный режим: " + value);
+    throw std::runtime_error("unknown operating mode: " + value);
+}
+
+Algorithm parse_algorithm(const std::vector<std::string> &args) {
+    std::string value = get_arg_value(args, "--algorithm", "-a");
+    if (value == "aes") {
+        return Algorithm::Aes;
+    }
+    if (value == "des") {
+        return Algorithm::Des;
+    }
+    if (value == "rava") {
+        return Algorithm::Rava;
+    }
+    throw std::runtime_error("unknown algorithm: " + value);
 }
 
 std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size) {
     std::string value = get_arg_value(args, "--key", "-k");
-    
+
     if (value == "generate" || value == "gen") {
         return random_vector(size);
-    } else if (value == "console" || value == "terminal") {
-        return input_bytes(size);
-    } else {
-        if (!std::filesystem::exists(value)) {
-            throw std::runtime_error("Файл ключа не существует: " + value);
-        }
-        return read_bytes(value, size);
     }
+    if (value == "console" || value == "terminal") {
+        return input_bytes(size);
+    }
+    if (!std::filesystem::exists(value)) {
+        throw std::runtime_error("Файл ключа не существует: " + value);
+    }
+    return read_n_bytes(value, size);
 }
 
 void parse_save_key(const std::vector<std::string> &args, const std::vector<uint8_t> &key) {
+    std::string value;
     try {
-        std::string value = get_arg_value(args, "--save-key", "-s");
-        if (std::filesystem::exists(value)) {
-            throw std::runtime_error("Файл для сохранения ключа уже существует: " + value);
-        }
-        write_bytes(value, key);
-    } catch (const Mystd::runtime_error &) {
+        value = get_arg_value(args, "--save-key", "-s");
+    } catch (...) {
+        return;
     }
+    if (std::filesystem::exists(value)) {
+        throw std::runtime_error("Файл для сохранения ключа уже существует: " + value);
+    }
+    write_bytes(value, key);
 }
 
 std::vector<uint8_t> parse_input(const std::vector<std::string> &args) {
@@ -79,20 +100,19 @@ std::vector<uint8_t> parse_input(const std::vector<std::string> &args) {
     
     if (value == "console" || value == "terminal") {
         return input_all_bytes();
-    } else {
-        try {
-            return parse_hex_all(value);
-        } catch (...) {
-            if (!std::filesystem::exists(value)) {
-                throw std::runtime_error("Файл входных данных не существует: " + value);
-            }
-            return read_all_bytes(value);
-        }
     }
-} */
+    try {
+        return parse_hex_all(value);
+    } catch (...) {
+        if (!std::filesystem::exists(value)) {
+            throw std::runtime_error("input data file not exist: " + value);
+        }
+        return read_all_bytes(value);
+    }
+}
 
 ParsedOutput parse_output(const std::vector<std::string> &args) {
-    if (std::string value = get_arg_value(args, "--output", "-o"); value == "binary" || value == "bin") {
+    if (const std::string value = get_arg_value(args, "--output", "-o"); value == "binary" || value == "bin") {
         return ParsedOutput{"", Output::Binary};
     } else {
         if (value == "text") {
@@ -102,7 +122,7 @@ ParsedOutput parse_output(const std::vector<std::string> &args) {
             return ParsedOutput{"", Output::Hex};
         }
         if (std::filesystem::exists(value)) {
-            throw std::runtime_error("Файл вывода уже существует: " + value);
+            throw std::runtime_error("Output file already exists: " + value);
         }
         return ParsedOutput{value, Output::File};
     }

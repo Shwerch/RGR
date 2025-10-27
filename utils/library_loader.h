@@ -3,22 +3,18 @@
 #include <string>
 
 #ifdef _WIN32
-#include <windows.h>
-#define LIB_HANDLE HMODULE
-#define load_lib(name) LoadLibraryA(name)
-#define get_func(handle, name) GetProcAddress(handle, name)
-#define close_lib(handle) FreeLibrary(handle)
-#else
-#include <dlfcn.h>
-#define LIB_HANDLE void*
-#define load_lib(name) dlopen(name, RTLD_LAZY)
-#define get_func(handle, name) dlsym(handle, name)
-#define close_lib(handle) dlclose(handle)
-#endif
-
-#ifdef _WIN32
+    #include <windows.h>
+    #define LIB_HANDLE HMODULE
+    #define load_lib(name) LoadLibraryA(name)
+    #define get_func(handle, name) GetProcAddress(handle, name)
+    #define close_lib(handle) FreeLibrary(handle)
     #define MAKE_LIB_NAME(name) (name + ".dll")
 #else
+    #include <dlfcn.h>
+    #define LIB_HANDLE void*
+    #define load_lib(name) dlopen(name, RTLD_LAZY)
+    #define get_func(handle, name) dlsym(handle, name)
+    #define close_lib(handle) dlclose(handle)
     #define MAKE_LIB_NAME(name) ("lib" + name + ".so")
 #endif
 

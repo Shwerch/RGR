@@ -6,7 +6,7 @@ Library::Library(const std::string &name) :
     handle(load_lib(MAKE_LIB_NAME(name).c_str())) {
     if (!handle) {
 #ifdef _WIN32
-        throw std::runtime_error("Error loading library (Windows): " + name);
+        throw std::runtime_error("Error loading library: " + name);
 #else
         const char* error_msg = dlerror();
         std::string error_details = (error_msg ? error_msg : "unknown error");

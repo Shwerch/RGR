@@ -8,6 +8,12 @@ enum class Mode {
     Decrypt
 };
 
+enum class Algorithm {
+    Aes,
+    Des,
+    Rava,
+};
+
 enum class Output {
     Binary,
     Text,
@@ -20,6 +26,7 @@ struct ParsedOutput {
     Output mode;
 };
 
+Algorithm parse_algorithm(const std::vector<std::string> &args);
 Mode parse_mode(const std::vector<std::string> &args);
 std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size);
 void parse_save_key(const std::vector<std::string> &args, const std::vector<uint8_t> &key);

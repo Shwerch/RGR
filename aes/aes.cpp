@@ -12,10 +12,9 @@ uint8_t* vector_to_raw(const std::vector<uint8_t>& vec) {
 
 extern "C" {
     uint8_t* encrypt(const uint8_t* plaintext_ptr, const size_t size, const uint8_t* key_ptr) {
-        const std::vector<uint8_t> plaintext = {plaintext_ptr, plaintext_ptr + size};
-        const std::vector<uint8_t> key = {key_ptr, key_ptr + 32};
-        const auto& ciphertext(plaintext);
-        return vector_to_raw(ciphertext);
+        std::vector<uint8_t> plaintext = {plaintext_ptr, plaintext_ptr + size};
+        std::vector<uint8_t> key = {key_ptr, key_ptr + 32};
+        return vector_to_raw(plaintext);
     }
 
     uint8_t* decrypt(const uint8_t* ciphertext_ptr, const size_t size, const uint8_t* key_ptr) {

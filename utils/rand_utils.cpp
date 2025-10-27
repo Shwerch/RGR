@@ -4,27 +4,20 @@
 std::vector<uint8_t> random_vector(size_t num_bytes) {
     std::vector<uint8_t> random_bytes(num_bytes);
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 255);
-    
-    for (size_t i = 0; i < num_bytes; ++i) {
-        random_bytes[i] = static_cast<uint8_t>(dis(gen));
+    for (size_t i = 0; i < num_bytes; i++) {
+        random_bytes.at(i) = static_cast<uint8_t>(rd() & 0xFF);
     }
-    
     return random_bytes;
 }
 
 template<size_t N>
-void random_array(uint8_t (&arr)[N]) {
+void random_array(uint8_t (&random_bytes)[N]) {
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 255);
-    
-    for (size_t i = 0; i < N; ++i) {
-        arr[i] = static_cast<uint8_t>(dis(gen));
+    for (size_t i = 0; i < N; i++) {
+        random_bytes[i] = static_cast<uint8_t>(rd() & 0xFF);
     }
 }
 
-template void random_array<8>(uint8_t (&)[8]);
-template void random_array<16>(uint8_t (&)[16]);
-template void random_array<32>(uint8_t (&)[32]);
+template void random_array(uint8_t (&)[8]);
+template void random_array(uint8_t (&)[16]);
+template void random_array(uint8_t (&)[32]);
