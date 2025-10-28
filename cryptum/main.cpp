@@ -33,17 +33,40 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto library = Library("aes");
-    auto function = library.get_function("encrypt");
-    auto data = function(input.data(), input.size(), key.data());
-    std::vector<uint8_t> result(data, data + input.size());
+    std::string alg_name;
+    if (algorithm == Algorithm::Aes) {
+        alg_name = "aes";
+    } else if (algorithm == Algorithm::Des) {
+        alg_name = "des";
+    } else if (algorithm == Algorithm::Rava) {
+        alg_name = "rava";
+    }
+
+    std::string func_name;
+    if (mode == Mode::Encrypt) {
+        func_name = "encrypt";
+    } else  if (mode == Mode::Decrypt) {
+        func_name = "decrypt";
+    }
+
+    uint8_t* data;
+    size_t data_size;
+    try {
+        auto library = Library(alg_name);
+        auto function = library.get_function(func_name);
+        data = function(input.data(), input.size(), key.data(), &data_size);
+    } catch (const std::exception &e) {
+        std::cerr << "exception: " << e.what() << std::endl;
+        return 1;
+    }
+    std::vector<uint8_t> result(data, data + data_size);
 
     switch (output.mode) {
         case Output::Binary: {
             std::cout << "[";
             for (size_t i = 0; i < result.size(); i++) {
-                std::cout << result[i];
-                if (i == result.size() - 1) std::cout << " ";
+                std::cout << static_cast<unsigned long long>(result[i]);
+                if (i != result.size() - 1) std::cout << ", ";
             }
             std::cout << "]" << std::endl;
             break;

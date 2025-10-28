@@ -18,7 +18,7 @@
     #define MAKE_LIB_NAME(name) ("lib" + name + ".so")
 #endif
 
-using Function = uint8_t* (*)(const uint8_t* text_ptr, size_t size, const uint8_t* key_ptr);
+using Function = uint8_t* (*)(const uint8_t* plaintext_ptr, size_t size, const uint8_t* key_ptr, size_t* out_size);
 
 struct Library {
 private:

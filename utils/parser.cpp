@@ -101,14 +101,10 @@ std::vector<uint8_t> parse_input(const std::vector<std::string> &args) {
     if (value == "console" || value == "terminal") {
         return input_all_bytes();
     }
-    try {
+    if (value.starts_with("0x")) {
         return parse_hex_all(value);
-    } catch (...) {
-        if (!std::filesystem::exists(value)) {
-            throw std::runtime_error("input data file not exist: " + value);
-        }
-        return read_all_bytes(value);
     }
+    return read_all_bytes(value);
 }
 
 ParsedOutput parse_output(const std::vector<std::string> &args) {

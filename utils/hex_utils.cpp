@@ -12,7 +12,7 @@ std::vector<uint8_t> parse_hex_to_vec(const std::string& hex_str, size_t N) {
         throw std::runtime_error("Hex string length must be even");
     std::vector<uint8_t> result;
     result.reserve(N);
-    for (size_t i = 0; i < N * 2; i += 2) {
+    for (size_t i = 2; i < N * 2; i += 2) {
         result.push_back(std::stoul(hex_str.substr(i, 2), nullptr, 16));
     }
     return result;
