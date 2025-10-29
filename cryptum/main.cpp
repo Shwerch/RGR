@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
         input = parse_input(args);
         output = parse_output(args);
     } catch (const std::exception &e) {
-        std::cerr << "arguments parsing error: " << e.what() << std::endl;
+        std::cerr << "Ошибка парсинга аргументов: " << e.what() << std::endl;
         return 1;
     }
 
