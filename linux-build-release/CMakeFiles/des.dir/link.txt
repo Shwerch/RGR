@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -O2 -shared -Wl,-soname,libdes.so -o libdes.so CMakeFiles/des.dir/des/des.cpp.o  libutils.a -ldl 

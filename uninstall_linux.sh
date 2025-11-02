@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-APP_DIR="/opt/cryptum"
-BIN_LINK="/usr/local/bin/cryptum"
+APP_NAME="cryptum"
+APP_DIR="/opt/$APP_NAME"
+BIN_LINK="/usr/local/bin/$APP_NAME"
 
-if [[ -L "$BIN_LINK" || -f "$BIN_LINK" ]]; then
-    sudo rm -f "$BIN_LINK"
+if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+  SUDO=sudo
+else
+  SUDO=
 fi
 
-if [[ -d "$APP_DIR" ]]; then
-    sudo rm -rf "$APP_DIR"
-fi
+$SUDO rm -f "$BIN_LINK"
+$SUDO rm -rf "$APP_DIR"
 
 echo "Uninstallation done"

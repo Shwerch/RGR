@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <algorithm>
 
 constexpr size_t BLOCK_SIZE = 8;
 constexpr size_t WORD_SIZE = 32;

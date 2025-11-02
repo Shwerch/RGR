@@ -1,9 +1,11 @@
 #include "des.h"
 
+
 #include <iostream>
 #include <vector>
 #include <cstdint>
 #include <array>
+#include <algorithm>
 
 #include "../utils/pkcs7.h"
 

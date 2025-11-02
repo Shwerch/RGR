@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 #ifdef _WIN32
     #define EXPORT __declspec(dllexport)
