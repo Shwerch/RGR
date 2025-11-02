@@ -1,3 +1,6 @@
+linux-build-release
+win-build-release
+
 # Prerequisites
 *.d
 

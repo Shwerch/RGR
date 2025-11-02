@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O3 -DNDEBUG -O2 -shared -Wl,-soname,librava.so -o librava.so CMakeFiles/rava.dir/rava/rava.cpp.o  libutils.a -ldl 

@@ -1,36 +1,34 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "CRYPTUM_DIR=C:\Program Files\Cryptum"
+set "APP_NAME=cryptum"
+set "CRYPTUM_DIR=%ProgramFiles%\%APP_NAME%"
+set "SRC_DIR=win-build-release"
 
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo [ERROR]: Administrator rights required
+    echo Administrator rights required
     pause
-    exit /b 1
+    exit 1
 )
 
-if not exist "%CRYPTUM_DIR%" (
-    mkdir "%CRYPTUM_DIR%"
-    if %errorLevel% neq 0 (
-        echo [ERROR]: Cannot create directory
-        pause
-        exit /b 1
-    )
-)
+if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
+pushd "%SRC_DIR%"
 
-set "SOURCE_DIR=cmake-build-release"
+cmake ..
+if errorlevel 1 exit /b 1
 
-copy /Y "%SOURCE_DIR%\cryptum.exe" "%CRYPTUM_DIR%\" >nul
-copy /Y "%SOURCE_DIR%\aes.dll" "%CRYPTUM_DIR%\" >nul
-copy /Y "%SOURCE_DIR%\des.dll" "%CRYPTUM_DIR%\" >nul
-copy /Y "%SOURCE_DIR%\rava.dll" "%CRYPTUM_DIR%\" >nul
+cmake --build . --config Release
+if errorlevel 1 exit /b 1
 
-if %errorLevel% neq 0 (
-    echo [ERROR]: Cannot copy files in directory
-    pause
-    exit /b 1
-)
+popd
+
+if not exist "%CRYPTUM_DIR%" mkdir "%CRYPTUM_DIR%"
+
+copy /Y "%SRC_DIR%\Release\cryptum.exe" "%CRYPTUM_DIR%\" >nul
+copy /Y "%SRC_DIR%\Release\aes.dll" "%CRYPTUM_DIR%\" >nul
+copy /Y "%SRC_DIR%\Release\des.dll" "%CRYPTUM_DIR%\" >nul
+copy /Y "%SRC_DIR%\Release\rava.dll" "%CRYPTUM_DIR%\" >nul
 
 set "UserPath="
 for /f "usebackq tokens=2*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul ^| findstr /R /C:"Path"`) do (

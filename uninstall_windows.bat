@@ -1,13 +1,14 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "CRYPTUM_DIR=C:\Program Files\Cryptum"
+set "APP_NAME=cryptum"
+set "CRYPTUM_DIR=%ProgramFiles%\%APP_NAME%"
 
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo [ERROR]: Administrator rights required
+    echo Administrator rights required
     pause
-    exit /b 1
+    exit 1
 )
 
 if exist "%CRYPTUM_DIR%" (
@@ -21,6 +22,5 @@ if exist "%CRYPTUM_DIR%" (
 
 endlocal
 
-echo Restart shell to update Path
-echo Installation done
+echo Unnstallation done
 pause

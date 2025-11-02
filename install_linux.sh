@@ -12,38 +12,22 @@ else
   SUDO=
 fi
 
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "Cmake not found" >&2
+  exit 1
+elif ! command -v make >/dev/null 2>&1; then
+  echo "Make not found" >&2
+  exit 1
+fi
+
 mkdir -p "$SRC_DIR"
 cd "$SRC_DIR"
-
-if ! command -v cmake >/dev/null 2>&1; then
-  if command -v apt-get >/dev/null 2>&1; then
-    $SUDO apt-get update
-    $SUDO apt-get install -y cmake build-essential
-  elif command -v dnf >/dev/null 2>&1; then
-    $SUDO dnf install -y cmake make gcc-c++
-  elif command -v yum >/dev/null 2>&1; then
-    $SUDO yum install -y cmake make gcc-c++
-  elif command -v pacman >/dev/null 2>&1; then
-    $SUDO pacman -Sy --noconfirm cmake base-devel
-  elif command -v zypper >/dev/null 2>&1; then
-    $SUDO zypper --non-interactive install cmake gcc make gcc-c++
-  fi
-fi
-
 cmake -DCMAKE_BUILD_TYPE=Release ..
-MAKE_JOBS=1
-if command -v nproc >/dev/null 2>&1; then
-  MAKE_JOBS=$(nproc)
-fi
-make -j"$MAKE_JOBS"
+make
 
 BUILD_BIN="./$APP_NAME"
 if [ ! -x "$BUILD_BIN" ]; then
   BUILD_BIN=$(find . -type f -name "$APP_NAME" -perm /111 -print -quit 2>/dev/null || true)
-fi
-if [ -z "${BUILD_BIN:-}" ]; then
-  echo "build failed: binary not found" >&2
-  exit 1
 fi
 
 $SUDO mkdir -p "$APP_DIR"
