@@ -12,11 +12,19 @@ if %errorLevel% neq 0 (
     exit 1
 )
 
-cmake -S . -B "%SRC_DIR%" -DCMAKE_BUILD_TYPE=Release
-if errorlevel 1 exit /b 1
+cmake -S . -B "%SRC_DIR%" -G "Visual Studio 17 2022"
+if errorlevel 1 (
+    echo CMake Configuration failed!
+    pause
+    exit /b 1
+)
 
 cmake --build "%SRC_DIR%" --config Release
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    echo CMake Build failed!
+    pause
+    exit /b 1
+)
 
 if not exist "%CRYPTUM_DIR%" mkdir "%CRYPTUM_DIR%"
 
@@ -39,10 +47,10 @@ if %errorlevel%==1 (
         set "NewPath=%UserPath%;%CRYPTUM_DIR%"
     )
     setx Path "!NewPath!"
+    echo Restart shell to update PATH
 )
 
 endlocal
 
-echo Restart shell to update PATH
 echo Installation done
 pause
