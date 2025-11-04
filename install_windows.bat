@@ -7,7 +7,7 @@ set "SRC_DIR=win-build-release"
 
 net session >nul 2>&1
 if errorlevel 1 (
-    echo Administrator rights required
+    echo Administrator rights required!
     pause
     exit /b 1
 )
