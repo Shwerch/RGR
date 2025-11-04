@@ -19,7 +19,7 @@ bool has_arg(const std::vector<std::string> &args, const std::string &long_name,
     return false;
 }
 
-std::string get_arg_value(const std::vector<std::string> &args, 
+std::string get_arg_value(const std::vector<std::string> &args,
                           const std::string &long_name, const std::string &short_name) {
     for (size_t i = 1; i < args.size(); ++i) {
         std::string value;
@@ -77,7 +77,7 @@ std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size
         return input_bytes(size);
     }
     if (!std::filesystem::exists(value)) {
-        throw std::runtime_error("Файл ключа не существует: " + value);
+        throw std::runtime_error("key file not exists: " + value);
     }
     return read_n_bytes(value, size);
 }
@@ -90,7 +90,7 @@ void parse_save_key(const std::vector<std::string> &args, const std::vector<uint
         return;
     }
     if (std::filesystem::exists(value)) {
-        throw std::runtime_error("Файл для сохранения ключа уже существует: " + value);
+        throw std::runtime_error("key file already exist: " + value);
     }
     write_bytes(value, key);
 }
@@ -102,51 +102,50 @@ std::vector<uint8_t> parse_input(const std::vector<std::string> &args) {
         return input_all_bytes();
     }
     if (value.starts_with("0x")) {
-        return parse_hex_all(value);
+        return parse_hex_to_vec(value);
     }
     return read_all_bytes(value);
 }
 
 ParsedOutput parse_output(const std::vector<std::string> &args) {
-    if (const std::string value = get_arg_value(args, "--output", "-o"); value == "binary" || value == "bin") {
-        return ParsedOutput{"", Output::Binary};
-    } else {
-        if (value == "text") {
-            return ParsedOutput{"", Output::Text};
+    ParsedOutput parsed_output;
+    std::optional<Output> output_mode = std::nullopt;
+
+    try {
+        const std::string format = get_arg_value(args, "--format", "-f");
+
+        if (format == "binary" || format == "bin") {
+            output_mode = Output::Binary;
         }
-        if (value == "hex") {
-            return ParsedOutput{"", Output::Hex};
+        else if (format == "text") {
+            output_mode =  Output::Text;
         }
-        if (std::filesystem::exists(value)) {
-            throw std::runtime_error("Output file already exists: " + value);
+        else if (format == "hex") {
+            output_mode =  Output::Hex;
         }
-        return ParsedOutput{value, Output::File};
+    } catch (const std::runtime_error &) {}
+
+    try {
+        const std::string output = get_arg_value(args, "--output", "-o");
+
+        if (std::filesystem::exists(output)) {
+            throw std::runtime_error("output file already exists: " + output);
+        }
+        output_mode = Output::File;
+        parsed_output.path = output;
+    } catch (const std::runtime_error &) {}
+
+    if (output_mode == std::nullopt && parsed_output.path == std::nullopt) {
+        throw std::runtime_error("output not specified");
     }
+    parsed_output.mode = output_mode.value();
+
+    return parsed_output;
 }
 
 bool parse_help(const std::vector<std::string> &args) {
     if (has_arg(args, "--help", "-h") || args.size() <= 1) {
-        std::cout << R"(
-usage: cryptum [OPTIONS]
-
-Uses encryption algorithms AES, DES and RAVA for data conversion.
-
-Required:
-  -a, --algorithm {des, aes, rava}                  The encryption algorithm used
-  -m, --mode {encrypt, decrypt}                     Operating mode
-  -k, --key {generate, console, /path/to/file}      Key source
-  -i, --input {console, /path/to/file}              Input source
-  -o, --output {binary, text, hex, /path/to/file}   Output place
-
-Optional:
-  -h, --help                                        Show this help and exit
-  -s, --save-key /path/to/file                      The key saving file
-
-Examples:
-  cryptum -a des -m decrypt -k console -i 0x5b245b08e90603dff5a6f08d0457be95 -o text
-  cryptum -a aes -m decrypt -k key.txt -i output.bin -o binary
-  cryptum -a rava -m encrypt -k generate -s key.txt -i console -o hex
-)" << std::endl;
+        std::cout << HELP << std::endl;
         return true;
     }
     return false;

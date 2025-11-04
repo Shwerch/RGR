@@ -14,12 +14,12 @@ int main(int argc, char** argv) {
 #endif
     std::vector<std::string> args = {argv, argv + argc};
     Algorithm algorithm;
-    size_t key_size;
     Mode mode;
     std::vector<uint8_t> key;
     std::vector<uint8_t> input;
     ParsedOutput output;
     try {
+        size_t key_size;
         if (parse_help(args)) return 0;
         algorithm = parse_algorithm(args);
         key_size = algorithm == Algorithm::Aes ? 32 : algorithm == Algorithm::Des ? 8 : 32;
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
             break;
         }
         case Output::File: {
-            write_bytes(output.path, result);
+            write_bytes(output.path.value(), result);
             break;
         }
         case Output::Hex: {

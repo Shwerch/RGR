@@ -18,7 +18,7 @@ std::vector<uint8_t> input_all_bytes() {
             }
         }
         if (is_hex) {
-            return parse_hex_all(hex_str);
+            return parse_hex_to_vec(hex_str);
         }
     }
 

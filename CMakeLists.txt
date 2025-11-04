@@ -6,24 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(MSVC)
-    add_compile_options(
-            /O2
-            /W4
-            /WX
-            /utf-8
-    )
-else()
-    add_compile_options(
-            -std=c++23
-            -pedantic
-            -O3
-            -Wall
-            -Wextra
-            -Werror
-    )
-endif()
-
 include_directories(include)
 
 set(UTILS_SOURCES
@@ -69,12 +51,12 @@ foreach(TARGET ${ALL_TARGETS})
                 /W4
                 /WX
                 /utf-8
-                /O2
+                $<$<CONFIG:Release>:/O2>
         )
     else()
         target_compile_options(${TARGET} PUBLIC
                 -std=c++23
-                -O2
+                $<$<CONFIG:Release>:-O3>
                 -pedantic
                 -Wall
                 -Wextra
