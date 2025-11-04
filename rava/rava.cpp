@@ -36,7 +36,7 @@ void bytes_to_words(const uint8_t* bytes, uint32_t& left, uint32_t& right) {
             (static_cast<uint32_t>(bytes[7]) << 24);
 }
 
-void words_to_bytes(uint32_t left, uint32_t right, const uint8_t* bytes) {
+void words_to_bytes(uint32_t left, uint32_t right, uint8_t* bytes) {
     bytes[0] = static_cast<uint8_t>(left & 0xFF);
     bytes[1] = static_cast<uint8_t>((left >> 8) & 0xFF);
     bytes[2] = static_cast<uint8_t>((left >> 16) & 0xFF);
@@ -95,7 +95,7 @@ uint8_t* vector_to_raw(const std::vector<uint8_t>& vec) {
 }
 
 extern "C" {
-    EXPORT uint8_t* encrypt(const uint8_t* plaintext_ptr, const size_t size, const uint8_t* key_ptr, const size_t* out_size) {
+    EXPORT uint8_t* encrypt(const uint8_t* plaintext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
         try {
             if (!plaintext_ptr || !key_ptr || !out_size) {
                 std::cerr << "null pointer provided to encrypt function" << std::endl;
@@ -127,7 +127,7 @@ extern "C" {
         }
     }
 
-    EXPORT uint8_t* decrypt(const uint8_t* ciphertext_ptr, const size_t size, const uint8_t* key_ptr, const size_t* out_size) {
+    EXPORT uint8_t* decrypt(const uint8_t* ciphertext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
         try {
             if (!ciphertext_ptr || !key_ptr || !out_size) {
                 std::cerr << "null pointer provided to decrypt function" << std::endl;
