@@ -23,12 +23,11 @@ cmake --build "$SRC_DIR"
 $SUDO mkdir -p "$APP_DIR"
 $SUDO cp "./$SRC_DIR/$APP_NAME" "$APP_DIR/"
 
-LIBS=$(printf "%s\n" lib*.so* 2>/dev/null || true)
+LIBS=$(find "$SRC_DIR" -maxdepth 1 -type f -name 'lib*.so*' 2>/dev/null || true)
+
 if [ -n "$LIBS" ]; then
   for f in $LIBS; do
-    if [ -f "$f" ]; then
-      $SUDO cp "$f" "$APP_DIR/" || true
-    fi
+    $SUDO cp "$f" "$APP_DIR/" || true
   done
 fi
 
