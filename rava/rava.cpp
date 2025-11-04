@@ -47,11 +47,16 @@ void words_to_bytes(uint32_t left, uint32_t right, uint8_t* bytes) {
     bytes[6] = static_cast<uint8_t>((right >> 16) & 0xFF);
     bytes[7] = static_cast<uint8_t>((right >> 24) & 0xFF);
 }
-
 void generate_round_keys(const std::vector<uint8_t>& key, std::vector<uint32_t>& round_keys) {
-    std::vector<uint32_t> key_words(8);
+    const size_t words_count = key.size() / 4;
+    if (words_count == 0) {
+        round_keys.clear();
+        return;
+    }
 
-    for (size_t i = 0; i < 8; ++i) {
+    std::vector<uint32_t> key_words(words_count);
+
+    for (size_t i = 0; i < words_count; ++i) {
         key_words[i] = static_cast<uint32_t>(key[i * 4]) |
                        (static_cast<uint32_t>(key[i * 4 + 1]) << 8) |
                        (static_cast<uint32_t>(key[i * 4 + 2]) << 16) |
@@ -59,14 +64,18 @@ void generate_round_keys(const std::vector<uint8_t>& key, std::vector<uint32_t>&
     }
 
     round_keys.resize(ROUNDS);
-    round_keys[0] = key_words[0];
 
-    for (size_t i = 1; i < ROUNDS; ++i) {
-        size_t key_idx = i % 8;
+    for (size_t i = 0; i < std::min(words_count, ROUNDS); ++i) {
+        round_keys[i] = key_words[i];
+    }
+
+    for (size_t i = words_count; i < ROUNDS; ++i) {
+        size_t key_idx = i % words_count;
         key_words[key_idx] = rotate_left(key_words[key_idx], ROTATION_KEY) + round_keys[i - 1];
         round_keys[i] = key_words[key_idx] ^ static_cast<uint32_t>(i);
     }
 }
+
 
 void encrypt_block(uint32_t& left, uint32_t& right, const std::vector<uint32_t>& round_keys) {
     for (size_t i = 0; i < ROUNDS; ++i) {
