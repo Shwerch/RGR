@@ -15,23 +15,13 @@ fi
 if ! command -v cmake >/dev/null 2>&1; then
   echo "Cmake not found" >&2
   exit 1
-elif ! command -v make >/dev/null 2>&1; then
-  echo "Make not found" >&2
-  exit 1
 fi
 
-mkdir -p "$SRC_DIR"
-cd "$SRC_DIR"
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-
-BUILD_BIN="./$APP_NAME"
-if [ ! -x "$BUILD_BIN" ]; then
-  BUILD_BIN=$(find . -type f -name "$APP_NAME" -perm /111 -print -quit 2>/dev/null || true)
-fi
+cmake -S . -B "$SRC_DIR" -DCMAKE_BUILD_TYPE=Release
+cmake --build "$SRC_DIR"
 
 $SUDO mkdir -p "$APP_DIR"
-$SUDO cp "$BUILD_BIN" "$APP_DIR/"
+$SUDO cp "./$SRC_DIR/$APP_NAME" "$APP_DIR/"
 
 LIBS=$(printf "%s\n" lib*.so* 2>/dev/null || true)
 if [ -n "$LIBS" ]; then

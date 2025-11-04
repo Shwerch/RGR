@@ -16,11 +16,11 @@ if(MSVC)
 else()
     add_compile_options(
             -std=c++23
-            -O2
+            -pedantic
+            -O3
             -Wall
             -Wextra
             -Werror
-            -pedantic
     )
 endif()
 
