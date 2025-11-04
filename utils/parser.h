@@ -31,18 +31,18 @@ struct ParsedOutput {
 constexpr auto HELP = R"(
 usage: cryptum [OPTIONS]
 
-Uses encryption algorithms AES, DES and RAVA for data conversion.
+Uses encryption algorithms AES, DES and RAVA for data encryption and decryption.
 
 Required:
-  -a, --algorithm {des, aes, rava}                  The encryption algorithm used
-  -m, --mode {encrypt, decrypt}                     Operating mode
-  -k, --key {generate, console, /path/to/file}      Key source
-  -i, --input {console, hex data, /path/to/file}    Input source
-  -o, --output {binary, text, hex, /path/to/file}   Output place
+  -a, --algorithm {des, aes, rava}                     The encryption algorithm used
+  -m, --mode {encrypt|e, decrypt|d}                    Operating mode
+  -k, --key {generate|gen, console, /path/to/file}     Key source
+  -i, --input {console, 0x<hex_data>, /path/to/file}   Input source
+  -o, --output {binary|bin, text, hex, /path/to/file}  Output place
 
 Optional:
-  -h, --help                                        Show this help and exit
-  -s, --save-key /path/to/file                      The key saving file
+  -h, --help                                           Show this help and exit
+  -s, --save-key /path/to/file                         Save the generated key to file
 
 Examples:
   cryptum -a des -m decrypt -k console -i 0x5b245b08e90603dff5a6f08d0457be95 -o text
