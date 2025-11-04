@@ -3,12 +3,25 @@ project(Cryptum)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(MSVC)
-    add_compile_options(/utf-8)
+    add_compile_options(
+            /O2
+            /W4
+            /WX
+            /utf-8
+    )
 else()
+    add_compile_options(
+            -std=c++23
+            -O2
+            -Wall
+            -Wextra
+            -Werror
+            -pedantic
+    )
 endif()
 
 include_directories(include)
@@ -49,3 +62,23 @@ add_custom_command(TARGET cryptum POST_BUILD
         $<TARGET_FILE:rava>
         $<TARGET_FILE_DIR:cryptum>
 )
+set(ALL_TARGETS utils aes des rava cryptum)
+foreach(TARGET ${ALL_TARGETS})
+    if(MSVC)
+        target_compile_options(${TARGET} PUBLIC
+                /W4
+                /WX
+                /utf-8
+                /O2
+        )
+    else()
+        target_compile_options(${TARGET} PUBLIC
+                -std=c++23
+                -O2
+                -pedantic
+                -Wall
+                -Wextra
+                -Werror
+        )
+    endif()
+endforeach()
