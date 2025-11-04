@@ -1,5 +1,7 @@
-linux-build-release
-win-build-release
+/linux-build-release/
+/win-build-release/
+
+/.idea/
 
 # Prerequisites
 *.d
