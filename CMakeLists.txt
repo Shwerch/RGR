@@ -48,10 +48,10 @@ set(ALL_TARGETS utils aes des rava cryptum)
 foreach(TARGET ${ALL_TARGETS})
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC
+                $<$<CONFIG:Release>:/O2>
+                /utf-8
                 /W4
                 /WX
-                /utf-8
-                $<$<CONFIG:Release>:/O2>
         )
     else()
         target_compile_options(${TARGET} PUBLIC

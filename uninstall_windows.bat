@@ -1,20 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "APP_NAME=cryptum"
-set "CRYPTUM_DIR=%ProgramFiles%\%APP_NAME%"
-
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo Administrator rights required
-    pause
-    exit 1
-)
+set "APP_NAME=Cryptum"
+set "CRYPTUM_DIR=%LocalAppData%\%APP_NAME%"
 
 if exist "%CRYPTUM_DIR%" (
     rd /s /q "%CRYPTUM_DIR%"
-    if %errorLevel%==1 (
-        echo [ERROR]: Cannot delete directory
+    if errorlevel 1 (
+        echo Cannot delete program directory!
         pause
         exit /b 1
     )

@@ -1,16 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "APP_NAME=cryptum"
-set "CRYPTUM_DIR=%ProgramFiles%\%APP_NAME%"
+set "APP_NAME=Cryptum"
+set "CRYPTUM_DIR=%LocalAppData%\%APP_NAME%"
 set "SRC_DIR=win-build-release"
-
-net session >nul 2>&1
-if errorlevel 1 (
-    echo Administrator rights required!
-    pause
-    exit /b 1
-)
 
 cmake -S . -B "%SRC_DIR%" -G "Visual Studio 17 2022"
 if errorlevel 1 (
