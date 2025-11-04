@@ -12,16 +12,11 @@ if %errorLevel% neq 0 (
     exit 1
 )
 
-if not exist "%SRC_DIR%" mkdir "%SRC_DIR%"
-pushd "%SRC_DIR%"
-
-cmake ..
+cmake -S . -B "%SRC_DIR%" -DCMAKE_BUILD_TYPE=Release
 if errorlevel 1 exit /b 1
 
-cmake --build . --config Release
+cmake --build "%SRC_DIR%" --config Release
 if errorlevel 1 exit /b 1
-
-popd
 
 if not exist "%CRYPTUM_DIR%" mkdir "%CRYPTUM_DIR%"
 
