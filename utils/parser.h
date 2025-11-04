@@ -24,7 +24,7 @@ enum class Output {
 };
 
 struct ParsedOutput {
-    std::optional<std::string> path = std::nullopt;
+    std::optional<std::string> path;
     Output mode = Output::Hex;
 };
 
@@ -38,17 +38,17 @@ Required:
   -m, --mode {encrypt, decrypt}                     Operating mode
   -k, --key {generate, console, /path/to/file}      Key source
   -i, --input {console, hex data, /path/to/file}    Input source
-  -f, --format {binary, text, hex, file}            Output format
+  -o, --output {binary, text, hex, /path/to/file}   Output place
 
 Optional:
-  -o, --output /path/to/file                        Output place
   -h, --help                                        Show this help and exit
   -s, --save-key /path/to/file                      The key saving file
 
 Examples:
   cryptum -a des -m decrypt -k console -i 0x5b245b08e90603dff5a6f08d0457be95 -o text
-  cryptum -a aes -m decrypt -k key.txt -i output.bin -o binary
-  cryptum -a rava -m encrypt -k generate -s key.txt -i console -o hex
+  cryptum -a aes -m d -k key.bin -i output.bin -o bin
+  cryptum -a rava -m encrypt -k gen -s rava.key -i console -o hex
+  cryptum -a aes -m e -k gen -s aes.key -i console -o ciphertext.bin
 )";
 
 Algorithm parse_algorithm(const std::vector<std::string> &args);

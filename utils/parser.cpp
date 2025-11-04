@@ -109,37 +109,28 @@ std::vector<uint8_t> parse_input(const std::vector<std::string> &args) {
 
 ParsedOutput parse_output(const std::vector<std::string> &args) {
     ParsedOutput parsed_output;
-    std::optional<Output> output_mode = std::nullopt;
+    std::optional<Output> output_mode;
 
-    try {
-        const std::string format = get_arg_value(args, "--format", "-f");
-
-        if (format == "binary" || format == "bin") {
-            output_mode = Output::Binary;
-        }
-        else if (format == "text") {
-            output_mode =  Output::Text;
-        }
-        else if (format == "hex") {
-            output_mode =  Output::Hex;
-        }
-    } catch (const std::runtime_error &) {}
-
-    try {
-        const std::string output = get_arg_value(args, "--output", "-o");
-
+    std::string output = get_arg_value(args, "--output", "-o");
+    if (output == "binary" || output == "bin") {
+        output_mode = Output::Binary;
+    }
+    else if (output == "text") {
+        output_mode =  Output::Text;
+    }
+    else if (output == "hex") {
+        output_mode =  Output::Hex;
+    } else {
         if (std::filesystem::exists(output)) {
             throw std::runtime_error("output file already exists: " + output);
         }
         output_mode = Output::File;
         parsed_output.path = output;
-    } catch (const std::runtime_error &) {}
-
-    if (output_mode == std::nullopt && parsed_output.path == std::nullopt) {
-        throw std::runtime_error("output not specified");
     }
-    parsed_output.mode = output_mode.value();
 
+    if (output_mode == std::nullopt)
+        throw std::runtime_error("output not specified");
+    parsed_output.mode = output_mode.value();
     return parsed_output;
 }
 
