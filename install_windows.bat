@@ -6,10 +6,10 @@ set "CRYPTUM_DIR=%ProgramFiles%\%APP_NAME%"
 set "SRC_DIR=win-build-release"
 
 net session >nul 2>&1
-if %errorLevel% neq 0 (
+if errorlevel 1 (
     echo Administrator rights required
     pause
-    exit 1
+    exit /b 1
 )
 
 cmake -S . -B "%SRC_DIR%" -G "Visual Studio 17 2022"
@@ -40,7 +40,7 @@ for /f "usebackq tokens=2*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul
 if not defined UserPath set "UserPath="
 
 echo !UserPath! | find /i "%CRYPTUM_DIR%" >nul
-if %errorlevel%==1 (
+if errorlevel 1 (
     if "!UserPath!"=="" (
         set "NewPath=%CRYPTUM_DIR%"
     ) else (
