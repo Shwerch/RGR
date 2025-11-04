@@ -71,7 +71,7 @@ uint8_t gmul(uint8_t a, uint8_t b) {
     return p;
 }
 
-void key_expansion(const uint8_t* key, uint8_t* round_keys) {
+void key_expansion(const uint8_t* key, const uint8_t* round_keys) {
     std::memcpy(round_keys, key, AES_KEY_SIZE);
 
     for (size_t i = NK; i < NB * (NR + 1); i++) {
@@ -97,25 +97,25 @@ void key_expansion(const uint8_t* key, uint8_t* round_keys) {
     }
 }
 
-void add_round_key(uint8_t* state, const uint8_t* round_key) {
+void add_round_key(const uint8_t* state, const uint8_t* round_key) {
     for (size_t i = 0; i < AES_BLOCK_SIZE; i++) {
         state[i] ^= round_key[i];
     }
 }
 
-void sub_bytes(uint8_t* state) {
+void sub_bytes(const uint8_t* state) {
     for (size_t i = 0; i < AES_BLOCK_SIZE; i++) {
         state[i] = S_BOX[state[i]];
     }
 }
 
-void inv_sub_bytes(uint8_t* state) {
+void inv_sub_bytes(const uint8_t* state) {
     for (size_t i = 0; i < AES_BLOCK_SIZE; i++) {
         state[i] = INV_S_BOX[state[i]];
     }
 }
 
-void shift_rows(uint8_t* state) {
+void shift_rows(const uint8_t* state) {
     uint8_t temp;
 
     temp = state[1];
@@ -138,7 +138,7 @@ void shift_rows(uint8_t* state) {
     state[3] = temp;
 }
 
-void inv_shift_rows(uint8_t* state) {
+void inv_shift_rows(const uint8_t* state) {
     uint8_t temp;
 
     temp = state[13];

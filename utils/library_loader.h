@@ -22,7 +22,7 @@ using Function = uint8_t* (*)(const uint8_t* plaintext_ptr, size_t size, const u
 
 struct Library {
 private:
-    LIB_HANDLE handle;
+    LIB_HANDLE handle{};
 public:
     explicit Library(const std::string &name);
     Function get_function(const std::string &func) const;

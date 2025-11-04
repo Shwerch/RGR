@@ -162,9 +162,9 @@ uint64_t permute48_from_56(uint64_t input, const int* table, int n) {
 
 uint64_t expand(uint32_t input) {
     uint64_t output = 0;
-    for (int i = 0; i < 48; i++) {
+    for (int i : E) {
         output <<= 1;
-        output |= (input >> (32 - E[i])) & 1;
+        output |= (input >> (32 - i)) & 1;
     }
     return output;
 }

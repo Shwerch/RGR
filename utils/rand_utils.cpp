@@ -2,7 +2,7 @@
 #include <random>
 
 std::vector<uint8_t> random_vector(size_t num_bytes) {
-    std::vector<uint8_t> random_bytes(num_bytes);
+    std::vector<uint8_t> random_bytes( );
     std::random_device rd;
     for (size_t i = 0; i < num_bytes; i++) {
         random_bytes.at(i) = static_cast<uint8_t>(rd() & 0xFF);
