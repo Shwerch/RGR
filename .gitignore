@@ -1,6 +1,8 @@
 /linux-build-release/
 /win-build-release/
+
 /cmake-build-release/
+/cmake-build-debug/
 
 /.idea/
 

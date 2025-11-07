@@ -39,7 +39,7 @@ std::string get_arg_value(const std::vector<std::string> &args,
             return args[i + 1];
         }
     }
-    throw std::runtime_error("argument " + long_name + " not specified");
+    throw std::runtime_error("the required argument is not specified: " + long_name);
 }
 
 Mode parse_mode(const std::vector<std::string> &args) {
@@ -77,7 +77,7 @@ std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size
         return input_bytes(size);
     }
     if (!std::filesystem::exists(value)) {
-        throw std::runtime_error("key file not exists: " + value);
+        throw std::runtime_error("the algorithm key file does not exist: " + value);
     }
     return read_n_bytes(value, size);
 }
@@ -90,7 +90,7 @@ void parse_save_key(const std::vector<std::string> &args, const std::vector<uint
         return;
     }
     if (std::filesystem::exists(value)) {
-        throw std::runtime_error("key file already exist: " + value);
+        throw std::runtime_error("the file for saving the algorithm key already exists: " + value);
     }
     write_bytes(value, key);
 }
@@ -122,14 +122,14 @@ ParsedOutput parse_output(const std::vector<std::string> &args) {
         output_mode =  Output::Hex;
     } else {
         if (std::filesystem::exists(output)) {
-            throw std::runtime_error("output file already exists: " + output);
+            throw std::runtime_error("the output data file already exists: " + output);
         }
         output_mode = Output::File;
         parsed_output.path = output;
     }
 
     if (output_mode == std::nullopt)
-        throw std::runtime_error("output not specified");
+        throw std::runtime_error("output destination not specified");
     parsed_output.mode = output_mode.value();
     return parsed_output;
 }

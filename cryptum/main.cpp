@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
         input = parse_input(args);
         output = parse_output(args);
     } catch (const std::exception &e) {
-        std::cerr << "error arguments parsing: " << e.what() << std::endl;
+        std::cerr << "Argument parsing error: " << e.what() << std::endl;
         return 1;
     }
 
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
         auto function = library.get_function(func_name);
         data = function(input.data(), input.size(), key.data(), &data_size);
     } catch (const std::exception &e) {
-        std::cerr << "exception: " << e.what() << std::endl;
+        std::cerr << "Error loading the dynamic library: " << e.what() << std::endl;
         return 1;
     }
     std::vector<uint8_t> result(data, data + data_size);
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
         case Output::Binary: {
             std::cout << "[";
             for (size_t i = 0; i < result.size(); i++) {
-                std::cout << static_cast<unsigned long long>(result[i]);
+                std::cout << static_cast<unsigned int>(result[i]);
                 if (i != result.size() - 1) std::cout << ", ";
             }
             std::cout << "]" << std::endl;
@@ -85,5 +85,6 @@ int main(int argc, char** argv) {
             break;
         }
     }
+
     return 0;
 }
