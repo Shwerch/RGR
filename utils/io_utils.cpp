@@ -27,9 +27,6 @@ std::vector<uint8_t> input_all_bytes() {
 
 std::vector<uint8_t> input_bytes(size_t n) {
     std::vector<uint8_t> result = input_all_bytes();
-    while (result.size() < n) {
-        result.push_back(0);
-    }
     result.resize(n);
     return result;
 }
