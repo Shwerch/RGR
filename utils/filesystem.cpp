@@ -26,14 +26,10 @@ std::vector<uint8_t> read_all_bytes(const std::string& path) {
 }
 void write_bytes(const std::string &path, const std::vector<uint8_t> &data) {
     std::ofstream out(path, std::ios::binary | std::ios::trunc);
-    if (!out) {
-        throw std::runtime_error("cannot open file for writing: " + path);
-    }
+    if (!out) throw std::runtime_error("cannot open file for writing: " + path);
     if (!data.empty()) {
         out.write(reinterpret_cast<const char*>(data.data()),
                   static_cast<std::streamsize>(data.size()));
-        if (!out) {
-            throw std::runtime_error("write failed: " + path);
-        }
+        if (!out) throw std::runtime_error("write failed: " + path);
     }
 }

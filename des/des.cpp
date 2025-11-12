@@ -1,13 +1,12 @@
 #include "des.h"
 
+#include "../utils/pkcs7.h"
 
 #include <iostream>
 #include <vector>
 #include <cstdint>
 #include <array>
 #include <algorithm>
-
-#include "../utils/pkcs7.h"
 
 constexpr int IP[64] = {
     58, 50, 42, 34, 26, 18, 10, 2,

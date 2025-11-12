@@ -22,7 +22,23 @@ int main(int argc, char** argv) {
         size_t key_size;
         if (parse_help(args)) return 0;
         algorithm = parse_algorithm(args);
-        key_size = algorithm == Algorithm::Aes ? 32 : algorithm == Algorithm::Des ? 8 : 32;
+        switch (algorithm) {
+            case Algorithm::Aes: {
+                key_size = 32;
+                break;
+            }
+            case Algorithm::Des: {
+                key_size = 8;
+                break;
+            }
+            case Algorithm::Rava: {
+                key_size = 32;
+                break;
+            }
+            default: {
+                key_size = 0;
+            }
+        }
         mode = parse_mode(args);
         key = parse_key(args, key_size);
         parse_save_key(args, key);
