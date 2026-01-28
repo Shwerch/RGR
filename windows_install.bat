@@ -24,7 +24,7 @@ if not exist "%CRYPTUM_DIR%" mkdir "%CRYPTUM_DIR%"
 copy /Y "%SRC_DIR%\Release\cryptum.exe" "%CRYPTUM_DIR%\" >nul
 copy /Y "%SRC_DIR%\Release\aes.dll" "%CRYPTUM_DIR%\" >nul
 copy /Y "%SRC_DIR%\Release\des.dll" "%CRYPTUM_DIR%\" >nul
-copy /Y "%SRC_DIR%\Release\rava.dll" "%CRYPTUM_DIR%\" >nul
+copy /Y "%SRC_DIR%\Release\ngea.dll" "%CRYPTUM_DIR%\" >nul
 
 set "UserPath="
 for /f "usebackq tokens=2*" %%A in (`reg query "HKCU\Environment" /v Path 2^>nul ^| findstr /R /C:"Path"`) do (

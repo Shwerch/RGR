@@ -31,8 +31,8 @@ target_link_libraries(aes utils)
 add_library(des SHARED des/des.cpp)
 target_link_libraries(des utils)
 
-add_library(rava SHARED rava/rava.cpp)
-target_link_libraries(rava utils)
+add_library(ngea SHARED ngea/ngea.cpp)
+target_link_libraries(ngea utils)
 
 add_executable(cryptum cryptum/main.cpp)
 target_link_libraries(cryptum utils)
@@ -41,10 +41,10 @@ add_custom_command(TARGET cryptum POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:aes>
         $<TARGET_FILE:des>
-        $<TARGET_FILE:rava>
+        $<TARGET_FILE:ngea>
         $<TARGET_FILE_DIR:cryptum>
 )
-set(ALL_TARGETS utils aes des rava cryptum)
+set(ALL_TARGETS utils aes des ngea cryptum)
 foreach(TARGET ${ALL_TARGETS})
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC

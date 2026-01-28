@@ -13,7 +13,7 @@ enum class Mode {
 enum class Algorithm {
     Aes,
     Des,
-    Rava,
+    Ngea,
 };
 
 enum class Output {
@@ -31,10 +31,10 @@ struct ParsedOutput {
 constexpr auto HELP = R"(
 usage: cryptum [OPTIONS]
 
-Uses encryption algorithms AES, DES and RAVA for data encryption and decryption.
+Uses encryption algorithms AES, DES and NGEA for data encryption and decryption.
 
 Required:
-  -a, --algorithm {des, aes, rava}                     The encryption algorithm used
+  -a, --algorithm {des, aes, ngea}                     The encryption algorithm used
   -m, --mode {encrypt|e, decrypt|d}                    Operating mode
   -k, --key {generate|gen, console, /path/to/file}     Key source
   -i, --input {console, 0x<hex_data>, /path/to/file}   Input source
@@ -47,7 +47,7 @@ Optional:
 Examples:
   cryptum -a des -m decrypt -k console -i 0x5b245b08e90603dff5a6f08d0457be95 -o text
   cryptum -a aes -m d -k key.bin -i output.bin -o bin
-  cryptum -a rava -m encrypt -k gen -s rava.key -i console -o hex
+  cryptum -a ngea -m encrypt -k gen -s ngea.key -i console -o hex
   cryptum -a aes -m e -k gen -s aes.key -i console -o ciphertext.bin
 )";
 

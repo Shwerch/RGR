@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
                 key_size = 8;
                 break;
             }
-            case Algorithm::Rava: {
+            case Algorithm::Ngea: {
                 key_size = 32;
                 break;
             }
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
         alg_name = "aes";
     } else if (algorithm == Algorithm::Des) {
         alg_name = "des";
-    } else if (algorithm == Algorithm::Rava) {
-        alg_name = "rava";
+    } else if (algorithm == Algorithm::Ngea) {
+        alg_name = "ngea";
     }
 
     std::string func_name;

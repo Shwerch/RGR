@@ -61,8 +61,8 @@ Algorithm parse_algorithm(const std::vector<std::string> &args) {
     if (value == "des") {
         return Algorithm::Des;
     }
-    if (value == "rava") {
-        return Algorithm::Rava;
+    if (value == "ngea") {
+        return Algorithm::Ngea;
     }
     throw std::runtime_error("unknown algorithm: " + value);
 }
