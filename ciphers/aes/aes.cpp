@@ -1,6 +1,6 @@
 #include "aes.h"
 
-#include "../utils/pkcs7.h"
+#include "pkcs7.h"
 
 #include <algorithm>
 #include <iostream>

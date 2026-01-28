@@ -1,6 +1,6 @@
 #include "des.h"
 
-#include "../utils/pkcs7.h"
+#include "pkcs7.h"
 
 #include <iostream>
 #include <vector>

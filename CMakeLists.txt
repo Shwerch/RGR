@@ -25,17 +25,18 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(utils dl)
 endif()
 
-add_library(aes SHARED aes/aes.cpp)
+add_library(aes SHARED ciphers/aes/aes.cpp)
 target_link_libraries(aes utils)
 
-add_library(des SHARED des/des.cpp)
+add_library(des SHARED ciphers/des/des.cpp)
 target_link_libraries(des utils)
 
-add_library(ngea SHARED ngea/ngea.cpp)
+add_library(ngea SHARED ciphers/ngea/ngea.cpp)
 target_link_libraries(ngea utils)
 
 add_executable(cryptum cryptum/main.cpp)
 target_link_libraries(cryptum utils)
+include_directories(utils)
 
 add_custom_command(TARGET cryptum POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
