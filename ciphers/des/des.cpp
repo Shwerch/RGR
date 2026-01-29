@@ -1,14 +1,10 @@
 #include "des.h"
 
-#include "pkcs7.h"
-
-#include <iostream>
+#include <cstring>
 #include <vector>
-#include <cstdint>
-#include <array>
 #include <algorithm>
 
-constexpr int IP[64] = {
+const uint8_t IP[] = {
     58, 50, 42, 34, 26, 18, 10, 2,
     60, 52, 44, 36, 28, 20, 12, 4,
     62, 54, 46, 38, 30, 22, 14, 6,
@@ -19,7 +15,7 @@ constexpr int IP[64] = {
     63, 55, 47, 39, 31, 23, 15, 7
 };
 
-constexpr int FP[64] = {
+const uint8_t FP[] = {
     40, 8, 48, 16, 56, 24, 64, 32,
     39, 7, 47, 15, 55, 23, 63, 31,
     38, 6, 46, 14, 54, 22, 62, 30,
@@ -30,7 +26,7 @@ constexpr int FP[64] = {
     33, 1, 41, 9, 49, 17, 57, 25
 };
 
-constexpr int E[48] = {
+const uint8_t E[] = {
     32, 1, 2, 3, 4, 5,
     4, 5, 6, 7, 8, 9,
     8, 9, 10, 11, 12, 13,
@@ -41,38 +37,18 @@ constexpr int E[48] = {
     28, 29, 30, 31, 32, 1
 };
 
-constexpr int P[32] = {
-    16, 7, 20, 21, 29, 12, 28, 17,
-    1, 15, 23, 26, 5, 18, 31, 10,
-    2, 8, 24, 14, 32, 27, 3, 9,
-    19, 13, 30, 6, 22, 11, 4, 25
+const uint8_t P[] = {
+    16, 7, 20, 21,
+    29, 12, 28, 17,
+    1, 15, 23, 26,
+    5, 18, 31, 10,
+    2, 8, 24, 14,
+    32, 27, 3, 9,
+    19, 13, 30, 6,
+    22, 11, 4, 25
 };
 
-constexpr int PC1[56] = {
-    57, 49, 41, 33, 25, 17, 9,
-    1, 58, 50, 42, 34, 26, 18,
-    10, 2, 59, 51, 43, 35, 27,
-    19, 11, 3, 60, 52, 44, 36,
-    63, 55, 47, 39, 31, 23, 15,
-    7, 62, 54, 46, 38, 30, 22,
-    14, 6, 61, 53, 45, 37, 29,
-    21, 13, 5, 28, 20, 12, 4
-};
-
-constexpr int PC2[48] = {
-    14, 17, 11, 24, 1, 5,
-    3, 28, 15, 6, 21, 10,
-    23, 19, 12, 4, 26, 8,
-    16, 7, 27, 20, 13, 2,
-    41, 52, 31, 37, 46, 54,
-    29, 36, 43, 51, 25, 38,
-    50, 47, 53, 49, 42, 30,
-    24, 34, 32, 40, 44, 48
-};
-
-constexpr int SHIFTS[16] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
-
-constexpr int S[8][4][16] = {
+const uint8_t SBOX[8][4][16] = {
     {
         {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7},
         {0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8},
@@ -123,180 +99,230 @@ constexpr int S[8][4][16] = {
     }
 };
 
-uint64_t permute(uint64_t input, const int* table, int n) {
+const uint8_t PC1[] = {
+    57, 49, 41, 33, 25, 17, 9,
+    1, 58, 50, 42, 34, 26, 18,
+    10, 2, 59, 51, 43, 35, 27,
+    19, 11, 3, 60, 52, 44, 36,
+    63, 55, 47, 39, 31, 23, 15,
+    7, 62, 54, 46, 38, 30, 22,
+    14, 6, 61, 53, 45, 37, 29,
+    21, 13, 5, 28, 20, 12, 4
+};
+
+const uint8_t PC2[] = {
+    14, 17, 11, 24, 1, 5,
+    3, 28, 15, 6, 21, 10,
+    23, 19, 12, 4, 26, 8,
+    16, 7, 27, 20, 13, 2,
+    41, 52, 31, 37, 47, 55,
+    30, 40, 51, 45, 33, 48,
+    44, 49, 39, 56, 34, 53,
+    46, 42, 50, 36, 29, 32
+};
+
+const uint8_t SHIFTS[] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
+
+uint64_t bytes_to_uint64(const uint8_t* data) {
+    uint64_t val = 0;
+    for (int i = 0; i < 8; ++i) {
+        val = (val << 8) | data[i];
+    }
+    return val;
+}
+
+void uint64_to_bytes(uint64_t val, uint8_t* data) {
+    for (int i = 7; i >= 0; --i) {
+        data[i] = static_cast<uint8_t>(val & 0xFF);
+        val >>= 8;
+    }
+}
+
+uint64_t permute(uint64_t input, const uint8_t* table, int n) {
     uint64_t output = 0;
-    for (int i = 0; i < n; i++) {
-        output <<= 1;
-        output |= (input >> (64 - table[i])) & 1;
-    }
-    return output;
-}
-
-uint32_t permute32(uint32_t input, const int* table, int n) {
-    uint32_t output = 0;
-    for (int i = 0; i < n; i++) {
-        output <<= 1;
-        output |= (input >> (32 - table[i])) & 1;
-    }
-    return output;
-}
-
-uint64_t permute56(uint64_t input, const int* table, int n) {
-    uint64_t output = 0;
-    for (int i = 0; i < n; i++) {
-        output <<= 1;
-        output |= (input >> (64 - table[i])) & 1;
-    }
-    return output;
-}
-
-uint64_t permute48_from_56(uint64_t input, const int* table, int n) {
-    uint64_t output = 0;
-    for (int i = 0; i < n; i++) {
-        output <<= 1;
-        output |= (input >> (56 - table[i])) & 1;
-    }
-    return output;
-}
-
-uint64_t expand(uint32_t input) {
-    uint64_t output = 0;
-    for (int i : E) {
-        output <<= 1;
-        output |= (input >> (32 - i)) & 1;
-    }
-    return output;
-}
-
-uint32_t sbox_substitution(uint64_t input) {
-    uint32_t output = 0;
-    for (int i = 0; i < 8; i++) {
-        int block = (input >> (42 - i * 6)) & 0x3F;
-        int row = ((block & 0x20) >> 4) | (block & 0x01);
-        int col = (block >> 1) & 0x0F;
-        output <<= 4;
-        output |= S[i][row][col];
-    }
-    return output;
-}
-
-uint32_t left_rotate28(uint32_t value, int shift) {
-    return ((value << shift) | (value >> (28 - shift))) & 0x0FFFFFFF;
-}
-
-void generate_subkeys(uint64_t key, std::array<uint64_t, 16>& subkeys) {
-    uint64_t permuted_key = permute56(key, PC1, 56);
-    uint32_t c = (permuted_key >> 28) & 0x0FFFFFFF;
-    uint32_t d = permuted_key & 0x0FFFFFFF;
-
-    for (int i = 0; i < 16; i++) {
-        c = left_rotate28(c, SHIFTS[i]);
-        d = left_rotate28(d, SHIFTS[i]);
-        uint64_t cd = (static_cast<uint64_t>(c) << 28) | d;
-        subkeys[i] = permute48_from_56(cd, PC2, 48);
-    }
-}
-
-uint32_t feistel(uint32_t r, uint64_t subkey) {
-    uint64_t expanded = expand(r);
-    uint64_t xored = expanded ^ subkey;
-    uint32_t substituted = sbox_substitution(xored);
-    return permute32(substituted, P, 32);
-}
-
-uint64_t des_block(uint64_t block, const std::array<uint64_t, 16>& subkeys, bool encrypt) {
-    uint64_t permuted = permute(block, IP, 64);
-    uint32_t l = (permuted >> 32) & 0xFFFFFFFF;
-    uint32_t r = permuted & 0xFFFFFFFF;
-
-    for (int i = 0; i < 16; i++) {
-        int key_index = encrypt ? i : 15 - i;
-        uint32_t temp = r;
-        r = l ^ feistel(r, subkeys[key_index]);
-        l = temp;
-    }
-
-    uint64_t combined = (static_cast<uint64_t>(r) << 32) | l;
-    return permute(combined, FP, 64);
-}
-
-std::vector<uint8_t> des_process(const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, bool encrypt) {
-    if (key.size() != 8) {
-        std::cerr << "Key must be 8 bytes" << std::endl;
-        return {};
-    }
-
-    uint64_t key64 = 0;
-    for (int i = 0; i < 8; i++) {
-        key64 = (key64 << 8) | key[i];
-    }
-
-    std::array<uint64_t, 16> subkeys;
-    generate_subkeys(key64, subkeys);
-
-    std::vector<uint8_t> result;
-    result.reserve(data.size());
-
-    for (size_t i = 0; i < data.size(); i += 8) {
-        uint64_t block = 0;
-        for (size_t j = 0; j < 8 && i + j < data.size(); j++) {
-            block = (block << 8) | data[i + j];
-        }
-
-        uint64_t processed = des_block(block, subkeys, encrypt);
-
-        for (int j = 7; j >= 0; j--) {
-            result.push_back((processed >> (j * 8)) & 0xFF);
+    for (int i = 0; i < n; ++i) {
+        if ((input >> (64 - table[i])) & 1) {
+            output |= (1ULL << (n - 1 - i));
         }
     }
-
-    return result;
+    return output;
 }
 
-uint8_t* vector_to_raw(const std::vector<uint8_t>& vec) {
-    auto* raw_data = new uint8_t[vec.size()];
-    std::copy_n(vec.data(), vec.size(), raw_data);
-    return raw_data;
+uint64_t permute_56(uint64_t input, const uint8_t* table) {
+    uint64_t output = 0;
+    for (int i = 0; i < 56; ++i) {
+        if ((input >> (64 - table[i])) & 1) {
+            output |= (1ULL << (55 - i));
+        }
+    }
+    return output;
+}
+
+uint64_t permute_48(uint64_t input, const uint8_t* table) {
+    uint64_t output = 0;
+    for (int i = 0; i < 48; ++i) {
+        if ((input >> (56 - table[i])) & 1) {
+            output |= (1ULL << (47 - i));
+        }
+    }
+    return output;
+}
+
+void generate_subkeys(uint64_t key, uint64_t* subkeys) {
+    uint64_t permuted_key = permute_56(key, PC1);
+    uint32_t c = (uint32_t)((permuted_key >> 28) & 0xFFFFFFF);
+    uint32_t d = (uint32_t)(permuted_key & 0xFFFFFFF);
+
+    for (int i = 0; i < 16; ++i) {
+        uint32_t shift = SHIFTS[i];
+        c = ((c << shift) | (c >> (28 - shift))) & 0xFFFFFFF;
+        d = ((d << shift) | (d >> (28 - shift))) & 0xFFFFFFF;
+        uint64_t cd = ((uint64_t)c << 28) | d;
+        subkeys[i] = permute_48(cd, PC2);
+    }
+}
+
+uint32_t f_function(uint32_t r, uint64_t k) {
+    uint64_t extended_r = 0;
+    for (int i = 0; i < 48; ++i) {
+        if ((r >> (32 - E[i])) & 1) {
+            extended_r |= (1ULL << (47 - i));
+        }
+    }
+    uint64_t xor_val = extended_r ^ k;
+    uint32_t output = 0;
+    for (int i = 0; i < 8; ++i) {
+        int row = ((xor_val >> (47 - i * 6)) & 1) * 2 + ((xor_val >> (42 - i * 6)) & 1);
+        int col = (xor_val >> (43 - i * 6)) & 0xF;
+        output |= ((uint32_t)SBOX[i][row][col] << (28 - i * 4));
+    }
+    uint32_t permuted_output = 0;
+    for (int i = 0; i < 32; ++i) {
+        if ((output >> (32 - P[i])) & 1) {
+            permuted_output |= (1U << (31 - i));
+        }
+    }
+    return permuted_output;
+}
+
+uint64_t process_block(uint64_t block, const uint64_t* subkeys, bool decrypt) {
+    block = permute(block, IP, 64);
+    uint32_t left = (uint32_t)(block >> 32);
+    uint32_t right = (uint32_t)(block & 0xFFFFFFFF);
+
+    for (int i = 0; i < 16; ++i) {
+        uint32_t prev_left = left;
+        left = right;
+        uint64_t key = decrypt ? subkeys[15 - i] : subkeys[i];
+        right = prev_left ^ f_function(right, key);
+    }
+
+    uint64_t final_block = ((uint64_t)right << 32) | left;
+    return permute(final_block, FP, 64);
 }
 
 extern "C" {
-    uint8_t* encrypt(const uint8_t* plaintext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
-        try {
-            std::vector<uint8_t> plaintext = {plaintext_ptr, plaintext_ptr + size};
-            std::vector<uint8_t> key = {key_ptr, key_ptr + 8};
 
-            std::vector<uint8_t> padded = pkcs7_pad(plaintext, 8);
-            std::vector<uint8_t> encrypted = des_process(padded, key, true);
+void default_deleter(uint8_t* ptr) {
+    delete[] ptr;
+}
 
-            *out_size = encrypted.size();
-            return vector_to_raw(encrypted);
-        } catch (const std::exception& e) {
-            std::cerr << "Encryption error: " << e.what() << std::endl;
-            *out_size = 0;
-            return nullptr;
+EXPORT bool encrypt(
+    const uint8_t* plaintext_ptr,
+    const size_t size,
+    const uint8_t* key_ptr,
+    uint8_t** ciphertext_ptr,
+    size_t* ciphertext_size,
+    Deleter* deleter_ptr
+) {
+    if (!plaintext_ptr || !key_ptr || !ciphertext_ptr || !ciphertext_size || !deleter_ptr) {
+        return false;
+    }
+
+    size_t padded_len = (size / 8 + 1) * 8;
+    uint8_t* output = new uint8_t[padded_len];
+    if (!output) return false;
+
+    uint64_t subkeys[16];
+    uint64_t key_val = bytes_to_uint64(key_ptr);
+    generate_subkeys(key_val, subkeys);
+
+    for (size_t i = 0; i < size / 8; ++i) {
+        uint64_t block = bytes_to_uint64(plaintext_ptr + i * 8);
+        uint64_t encrypted_block = process_block(block, subkeys, false);
+        uint64_to_bytes(encrypted_block, output + i * 8);
+    }
+
+    uint8_t last_block[8];
+    size_t remaining = size % 8;
+    std::memcpy(last_block, plaintext_ptr + (size / 8) * 8, remaining);
+    uint8_t padding_val = static_cast<uint8_t>(8 - remaining);
+    for (size_t i = remaining; i < 8; ++i) {
+        last_block[i] = padding_val;
+    }
+
+    uint64_t final_block_val = bytes_to_uint64(last_block);
+    uint64_t encrypted_final = process_block(final_block_val, subkeys, false);
+    uint64_to_bytes(encrypted_final, output + (size / 8) * 8);
+
+    *ciphertext_ptr = output;
+    *ciphertext_size = padded_len;
+    *deleter_ptr = default_deleter;
+
+    return true;
+}
+
+EXPORT bool decrypt(
+    const uint8_t* ciphertext_ptr,
+    const size_t size,
+    const uint8_t* key_ptr,
+    uint8_t** plaintext_ptr,
+    size_t* plaintext_size,
+    Deleter* deleter_ptr
+) {
+    if (!ciphertext_ptr || !key_ptr || !plaintext_ptr || !plaintext_size || !deleter_ptr) {
+        return false;
+    }
+    if (size == 0 || size % 8 != 0) {
+        return false;
+    }
+
+    uint8_t* output = new uint8_t[size];
+    if (!output) return false;
+
+    uint64_t subkeys[16];
+    uint64_t key_val = bytes_to_uint64(key_ptr);
+    generate_subkeys(key_val, subkeys);
+
+    for (size_t i = 0; i < size / 8; ++i) {
+        uint64_t block = bytes_to_uint64(ciphertext_ptr + i * 8);
+        uint64_t decrypted_block = process_block(block, subkeys, true);
+        uint64_to_bytes(decrypted_block, output + i * 8);
+    }
+
+    uint8_t padding_val = output[size - 1];
+    if (padding_val == 0 || padding_val > 8) {
+        delete[] output;
+        return false;
+    }
+
+    for (size_t i = 0; i < padding_val; ++i) {
+        if (output[size - 1 - i] != padding_val) {
+            delete[] output;
+            return false;
         }
     }
 
-    uint8_t* decrypt(const uint8_t* ciphertext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
-        try {
-            std::vector<uint8_t> ciphertext = {ciphertext_ptr, ciphertext_ptr + size};
-            std::vector<uint8_t> key = {key_ptr, key_ptr + 8};
+    size_t real_size = size - padding_val;
+    uint8_t* final_output = new uint8_t[real_size];
+    std::memcpy(final_output, output, real_size);
+    delete[] output;
 
-            if (ciphertext.size() % 8 != 0) {
-                std::cerr << "Ciphertext size must be multiple of 8" << std::endl;
-                *out_size = 0;
-                return nullptr;
-            }
+    *plaintext_ptr = final_output;
+    *plaintext_size = real_size;
+    *deleter_ptr = default_deleter;
 
-            std::vector<uint8_t> decrypted = des_process(ciphertext, key, false);
-            std::vector<uint8_t> unpadded = pkcs7_unpad(decrypted, 8);
+    return true;
+}
 
-            *out_size = unpadded.size();
-            return vector_to_raw(unpadded);
-        } catch (const std::exception& e) {
-            std::cerr << "Decryption error: " << e.what() << std::endl;
-            *out_size = 0;
-            return nullptr;
-        }
-    }
 }

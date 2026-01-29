@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
+#include <cstddef>
 
 #ifdef _WIN32
     #define EXPORT __declspec(dllexport)
@@ -10,6 +10,21 @@
 #endif
 
 extern "C" {
-    EXPORT uint8_t* encrypt(const uint8_t* plaintext_ptr, size_t size, const uint8_t* key_ptr, size_t* out_size);
-    EXPORT uint8_t* decrypt(const uint8_t* ciphertext_ptr, size_t size, const uint8_t* key_ptr, size_t* out_size);
+    typedef void (*Deleter)(char*);
+    EXPORT bool encrypt(
+        const uint8_t* plaintext_ptr,
+        const size_t size,
+        const uint8_t* key_ptr,
+        char** ciphertext_ptr,
+        size_t* ciphertext_size,
+        Deleter* deleter_ptr,
+    );
+    EXPORT bool decrypt(
+        const uint8_t* ciphertext_ptr,
+        const size_t size,
+        const uint8_t* key_ptr,
+        char** plaintext_ptr,
+        size_t* plaintext_size
+        Deleter* deleter_ptr,
+    );
 }

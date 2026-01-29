@@ -1,60 +1,95 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <cstdint>
+#include <filesystem>
 #include <optional>
-
-enum class Mode {
-    Encrypt,
-    Decrypt
-};
+#include <vector>
 
 enum class Algorithm {
-    Aes,
-    Des,
-    Ngea,
+    des,
+    aes,
+    ngea
+};
+
+enum class Mode {
+    encrypt,
+    decrypt
+};
+
+enum class Input {
+    text,
+    hex,
+    binary
 };
 
 enum class Output {
-    Binary,
-    Text,
-    Hex,
-    File
+    text,
+    hex,
+    binary
 };
 
-struct ParsedOutput {
-    std::optional<std::string> path;
-    Output mode = Output::Hex;
+enum class ReadFormat {
+    text,
+    hex,
+    binary
+};
+
+enum class WriteFormat {
+    text,
+    hex,
+    binary
+};
+
+struct Arguments {
+    Algorithm algorithm = Algorithm::des;
+    Mode mode = Mode::encrypt;
+    std::optional<std::filesystem::path> input;
+    std::optional<std::filesystem::path> output;
+    Input input_format = Input::text;
+    Output output_format = Output::binary;
+    std::optional<std::filesystem::path> key;
+    bool generate_key = false;
+    bool read_key = false;
+    bool promt_key = false;
+    ReadFormat read_key_format = ReadFormat::binary;
+    std::optional<std::filesystem::path> save_key;
+    bool write_key = false;
+    WriteFormat write_key_format = WriteFormat::binary;
+    bool help = false;
 };
 
 constexpr auto HELP = R"(
-usage: cryptum [OPTIONS]
+usage: cryptum --algorithm <alg> --mode <mode> [OPTIONS]
 
 Uses encryption algorithms AES, DES and NGEA for data encryption and decryption.
 
 Required:
-  -a, --algorithm {des, aes, ngea}                     The encryption algorithm used
-  -m, --mode {encrypt|e, decrypt|d}                    Operating mode
-  -k, --key {generate|gen, console, /path/to/file}     Key source
-  -i, --input {console, 0x<hex_data>, /path/to/file}   Input source
-  -o, --output {binary|bin, text, hex, /path/to/file}  Output place
+  -a, --algorithm {des,aes,ngea}              The encryption algorithm used.
+  -m, --mode {encrypt,decrypt}                Operating mode.
+
+Input/Output Options:
+  -i, --input <PATH>                          Input file path. If not provided, reads from stdin.
+  -o, --output <PATH>                         Output file path. If not provided, writes to stdout.
+  -I, --in-format {text,hex,binary}           Specify the format of the input data. [default: text]
+  -O, --out-format {text,hex,binary}          Specify the format for stdout. Ignored if -o is used. [default: binary for encrypt, text for decrypt]
+
+Key Input:
+  -k, --key <PATH>                            Path to the key file.
+  -g, --generate-key                          Generate a new random key.
+  -r, --read-key                              Read key from stdin.
+  -p, --promt-key                             Prompt for the key interactively on the console.
+  -R, --read-key-format {text,hex,binary}     Specify the input format of the key. [default: binary]
+
+Key Output:
+  -S, --save-key <PATH>                       Save the generated key to a file.
+  -w, --write-key                             Write the generated key to stdout.
+  -W, --write-key-format {text,hex,binary}    Specify the output format of the key. [default: binary]
 
 Optional:
-  -h, --help                                           Show this help and exit
-  -s, --save-key /path/to/file                         Save the generated key to file
-
-Examples:
-  cryptum -a des -m decrypt -k console -i 0x5b245b08e90603dff5a6f08d0457be95 -o text
-  cryptum -a aes -m d -k key.bin -i output.bin -o bin
-  cryptum -a ngea -m encrypt -k gen -s ngea.key -i console -o hex
-  cryptum -a aes -m e -k gen -s aes.key -i console -o ciphertext.bin
+  -h, --help                                  Show this help message and exit.
 )";
 
-Algorithm parse_algorithm(const std::vector<std::string> &args);
-Mode parse_mode(const std::vector<std::string> &args);
-std::vector<uint8_t> parse_key(const std::vector<std::string> &args, size_t size);
-void parse_save_key(const std::vector<std::string> &args, const std::vector<uint8_t> &key);
-std::vector<uint8_t> parse_input(const std::vector<std::string> &args);
-ParsedOutput parse_output(const std::vector<std::string> &args);
-bool parse_help(const std::vector<std::string> &args);
+Arguments parse_arguments(int argc, const char** argv);
+void check_arguments(const Arguments& args);
+std::vector<uint8_t> get_key(const Arguments& args);
+void export_key(const Arguments& args, const std::vector<uint8_t>& key_data);
+std::vector<uint8_t> get_input(const Arguments& args);

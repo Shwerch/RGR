@@ -1,20 +1,9 @@
 #include "aes.h"
-
-#include "pkcs7.h"
-
-#include <algorithm>
-#include <iostream>
+#include "rand_utils.h"
 #include <cstring>
 #include <vector>
-#include <array>
 
-constexpr size_t AES_BLOCK_SIZE = 16;
-constexpr size_t AES_KEY_SIZE = 32;
-constexpr size_t NK = 8;
-constexpr size_t NB = 4;
-constexpr size_t NR = 14;
-
-static const uint8_t S_BOX[256] = {
+const uint8_t sbox[256] = {
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
     0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
     0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
@@ -33,251 +22,190 @@ static const uint8_t S_BOX[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-static const uint8_t INV_S_BOX[256] = {
-    0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
-    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
-    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
-    0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
-    0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92,
-    0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84,
-    0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06,
-    0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b,
-    0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73,
-    0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e,
-    0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b,
-    0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4,
-    0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
-    0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
-    0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
-    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
+const uint8_t Rcon[11] = {
+    0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
-static const uint8_t RCON[11] = {
-    0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
-};
+void KeyExpansion(const uint8_t* key, uint8_t* roundKeys) {
+    unsigned i, j, k;
+    uint8_t temp[4]; 
 
-uint8_t gmul(uint8_t a, uint8_t b) {
-    uint8_t p = 0;
-    for (int i = 0; i < 8; i++) {
-        if (b & 1) {
-            p ^= a;
-        }
-        bool hi_bit_set = (a & 0x80) != 0;
-        a <<= 1;
-        if (hi_bit_set) {
-            a ^= 0x1b;
-        }
-        b >>= 1;
+    for (i = 0; i < 8; ++i) {
+        roundKeys[i * 4] = key[i * 4];
+        roundKeys[i * 4 + 1] = key[i * 4 + 1];
+        roundKeys[i * 4 + 2] = key[i * 4 + 2];
+        roundKeys[i * 4 + 3] = key[i * 4 + 3];
     }
-    return p;
-}
 
-void key_expansion(const uint8_t* key, uint8_t* round_keys) {
-    std::memcpy(round_keys, key, AES_KEY_SIZE);
+    for (i = 8; i < 60; ++i) {
+        k = (i - 1) * 4;
+        temp[0] = roundKeys[k];
+        temp[1] = roundKeys[k + 1];
+        temp[2] = roundKeys[k + 2];
+        temp[3] = roundKeys[k + 3];
 
-    for (size_t i = NK; i < NB * (NR + 1); i++) {
-        uint8_t temp[4];
-        std::memcpy(temp, round_keys + (i - 1) * 4, 4);
-
-        if (i % NK == 0) {
-            uint8_t k = temp[0];
-            temp[0] = S_BOX[temp[1]] ^ RCON[i / NK];
-            temp[1] = S_BOX[temp[2]];
-            temp[2] = S_BOX[temp[3]];
-            temp[3] = S_BOX[k];
-        } else if (i % NK == 4) {
-            temp[0] = S_BOX[temp[0]];
-            temp[1] = S_BOX[temp[1]];
-            temp[2] = S_BOX[temp[2]];
-            temp[3] = S_BOX[temp[3]];
+        if (i % 8 == 0) {
+            const uint8_t t = temp[0];
+            temp[0] = sbox[temp[1]] ^ Rcon[i / 8];
+            temp[1] = sbox[temp[2]];
+            temp[2] = sbox[temp[3]];
+            temp[3] = sbox[t];
+        } else if (i % 8 == 4) {
+            temp[0] = sbox[temp[0]];
+            temp[1] = sbox[temp[1]];
+            temp[2] = sbox[temp[2]];
+            temp[3] = sbox[temp[3]];
         }
 
-        for (size_t j = 0; j < 4; j++) {
-            round_keys[i * 4 + j] = round_keys[(i - NK) * 4 + j] ^ temp[j];
-        }
+        j = (i - 8) * 4;
+        k = i * 4;
+        roundKeys[k] = roundKeys[j] ^ temp[0];
+        roundKeys[k + 1] = roundKeys[j + 1] ^ temp[1];
+        roundKeys[k + 2] = roundKeys[j + 2] ^ temp[2];
+        roundKeys[k + 3] = roundKeys[j + 3] ^ temp[3];
     }
 }
 
-void add_round_key(uint8_t* state, const uint8_t* round_key) {
-    for (size_t i = 0; i < AES_BLOCK_SIZE; i++) {
-        state[i] ^= round_key[i];
+void AddRoundKey(uint8_t* state, const uint8_t* roundKey) {
+    for (int i = 0; i < 16; ++i) {
+        state[i] ^= roundKey[i];
     }
 }
 
-void sub_bytes(uint8_t* state) {
-    for (size_t i = 0; i < AES_BLOCK_SIZE; i++) {
-        state[i] = S_BOX[state[i]];
+void SubBytes(uint8_t* state) {
+    for (int i = 0; i < 16; ++i) {
+        state[i] = sbox[state[i]];
     }
 }
 
-void inv_sub_bytes(uint8_t* state) {
-    for (size_t i = 0; i < AES_BLOCK_SIZE; i++) {
-        state[i] = INV_S_BOX[state[i]];
-    }
-}
-
-void shift_rows(uint8_t* state) {
+void ShiftRows(uint8_t* state) {
     uint8_t temp;
-
-    temp = state[1];
-    state[1] = state[5];
-    state[5] = state[9];
-    state[9] = state[13];
-    state[13] = temp;
-
-    temp = state[2];
-    state[2] = state[10];
-    state[10] = temp;
-    temp = state[6];
-    state[6] = state[14];
-    state[14] = temp;
-
-    temp = state[15];
-    state[15] = state[11];
-    state[11] = state[7];
-    state[7] = state[3];
-    state[3] = temp;
+    temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
+    temp = state[2]; state[2] = state[10]; state[10] = temp;
+    temp = state[6]; state[6] = state[14]; state[14] = temp;
+    temp = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = state[3]; state[3] = temp;
 }
 
-void inv_shift_rows(uint8_t* state) {
-    uint8_t temp;
-
-    temp = state[13];
-    state[13] = state[9];
-    state[9] = state[5];
-    state[5] = state[1];
-    state[1] = temp;
-
-    temp = state[2];
-    state[2] = state[10];
-    state[10] = temp;
-    temp = state[6];
-    state[6] = state[14];
-    state[14] = temp;
-
-    temp = state[3];
-    state[3] = state[7];
-    state[7] = state[11];
-    state[11] = state[15];
-    state[15] = temp;
-}
-
-void mix_columns(uint8_t* state) {
-    for (size_t i = 0; i < 4; i++) {
-        uint8_t a[4];
-        std::memcpy(a, state + i * 4, 4);
-
-        state[i * 4 + 0] = gmul(a[0], 2) ^ gmul(a[1], 3) ^ a[2] ^ a[3];
-        state[i * 4 + 1] = a[0] ^ gmul(a[1], 2) ^ gmul(a[2], 3) ^ a[3];
-        state[i * 4 + 2] = a[0] ^ a[1] ^ gmul(a[2], 2) ^ gmul(a[3], 3);
-        state[i * 4 + 3] = gmul(a[0], 3) ^ a[1] ^ a[2] ^ gmul(a[3], 2);
+void MixColumns(uint8_t* state) {
+    uint8_t Tmp, Tm, t;
+    for (int i = 0; i < 4; ++i) {
+        t = state[i * 4];
+        Tmp = state[i * 4] ^ state[i * 4 + 1] ^ state[i * 4 + 2] ^ state[i * 4 + 3];
+        Tm = state[i * 4] ^ state[i * 4 + 1]; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
+        state[i * 4] ^= Tm ^ Tmp;
+        Tm = state[i * 4 + 1] ^ state[i * 4 + 2]; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
+        state[i * 4 + 1] ^= Tm ^ Tmp;
+        Tm = state[i * 4 + 2] ^ state[i * 4 + 3]; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
+        state[i * 4 + 2] ^= Tm ^ Tmp;
+        Tm = state[i * 4 + 3] ^ t; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
+        state[i * 4 + 3] ^= Tm ^ Tmp;
     }
 }
 
-void inv_mix_columns(uint8_t* state) {
-    for (size_t i = 0; i < 4; i++) {
-        uint8_t a[4];
-        std::memcpy(a, state + i * 4, 4);
+void Cipher(const uint8_t* in, uint8_t* out, const uint8_t* roundKeys) {
+    uint8_t state[16];
+    memcpy(state, in, 16);
 
-        state[i * 4 + 0] = gmul(a[0], 14) ^ gmul(a[1], 11) ^ gmul(a[2], 13) ^ gmul(a[3], 9);
-        state[i * 4 + 1] = gmul(a[0], 9) ^ gmul(a[1], 14) ^ gmul(a[2], 11) ^ gmul(a[3], 13);
-        state[i * 4 + 2] = gmul(a[0], 13) ^ gmul(a[1], 9) ^ gmul(a[2], 14) ^ gmul(a[3], 11);
-        state[i * 4 + 3] = gmul(a[0], 11) ^ gmul(a[1], 13) ^ gmul(a[2], 9) ^ gmul(a[3], 14);
+    AddRoundKey(state, roundKeys);
+
+    for (int round = 1; round < 14; ++round) {
+        SubBytes(state);
+        ShiftRows(state);
+        MixColumns(state);
+        AddRoundKey(state, roundKeys + round * 16);
+    }
+
+    SubBytes(state);
+    ShiftRows(state);
+    AddRoundKey(state, roundKeys + 14 * 16);
+
+    memcpy(out, state, 16);
+}
+
+void IncrementCounter(uint8_t* counter) {
+    for (int i = 15; i >= 0; --i) {
+        if (++counter[i] != 0) {
+            break;
+        }
     }
 }
 
-void encrypt_block(uint8_t* state, const uint8_t* round_keys) {
-    add_round_key(state, round_keys);
+void CTR_Process(const uint8_t* input, uint8_t* output, size_t size, const uint8_t* key, uint8_t* iv) {
+    uint8_t roundKeys[240];
+    KeyExpansion(key, roundKeys);
 
-    for (size_t round = 1; round < NR; round++) {
-        sub_bytes(state);
-        shift_rows(state);
-        mix_columns(state);
-        add_round_key(state, round_keys + round * AES_BLOCK_SIZE);
+    uint8_t counter[16];
+    memcpy(counter, iv, 16);
+
+    uint8_t keystream[16];
+    size_t i = 0;
+
+    while (i < size) {
+        Cipher(counter, keystream, roundKeys);
+        IncrementCounter(counter);
+
+        size_t block_size = (size - i) < 16 ? (size - i) : 16;
+        for (size_t j = 0; j < block_size; ++j) {
+            output[i + j] = input[i + j] ^ keystream[j];
+        }
+        i += block_size;
     }
-
-    sub_bytes(state);
-    shift_rows(state);
-    add_round_key(state, round_keys + NR * AES_BLOCK_SIZE);
-}
-
-void decrypt_block(uint8_t* state, const uint8_t* round_keys) {
-    add_round_key(state, round_keys + NR * AES_BLOCK_SIZE);
-
-    for (size_t round = NR - 1; round > 0; round--) {
-        inv_shift_rows(state);
-        inv_sub_bytes(state);
-        add_round_key(state, round_keys + round * AES_BLOCK_SIZE);
-        inv_mix_columns(state);
-    }
-
-    inv_shift_rows(state);
-    inv_sub_bytes(state);
-    add_round_key(state, round_keys);
-}
-
-uint8_t* vector_to_raw(const std::vector<uint8_t>& vec) {
-    auto* raw_data = new uint8_t[vec.size()];
-    std::copy_n(vec.data(), vec.size(), raw_data);
-    return raw_data;
 }
 
 extern "C" {
-    EXPORT uint8_t* encrypt(const uint8_t* plaintext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
-        try {
-            std::vector<uint8_t> plaintext(plaintext_ptr, plaintext_ptr + size);
-            std::vector<uint8_t> key(key_ptr, key_ptr + AES_KEY_SIZE);
 
-            std::vector<uint8_t> padded = pkcs7_pad(plaintext, AES_BLOCK_SIZE);
+void default_deleter(uint8_t* ptr) {
+    delete[] ptr;
+}
 
-            std::array<uint8_t, NB * (NR + 1) * 4> round_keys;
-            key_expansion(key.data(), round_keys.data());
-
-            std::vector<uint8_t> ciphertext(padded.size());
-
-            for (size_t i = 0; i < padded.size(); i += AES_BLOCK_SIZE) {
-                std::memcpy(ciphertext.data() + i, padded.data() + i, AES_BLOCK_SIZE);
-                encrypt_block(ciphertext.data() + i, round_keys.data());
-            }
-
-            *out_size = ciphertext.size();
-            return vector_to_raw(ciphertext);
-        } catch (const std::exception& e) {
-            std::cerr << "Encryption error: " << e.what() << std::endl;
-            *out_size = 0;
-            return nullptr;
-        }
+EXPORT bool encrypt(
+    const uint8_t* plaintext_ptr,
+    const size_t size,
+    const uint8_t* key_ptr,
+    uint8_t** ciphertext_ptr,
+    size_t* ciphertext_size,
+    Deleter* deleter_ptr
+) {
+    if (!plaintext_ptr || !key_ptr || !ciphertext_ptr || !ciphertext_size || !deleter_ptr) {
+        return false;
     }
 
-    EXPORT uint8_t* decrypt(const uint8_t* ciphertext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
-        try {
-            if (size % AES_BLOCK_SIZE != 0) {
-                std::cerr << "Invalid ciphertext size: must be multiple of " << AES_BLOCK_SIZE << std::endl;
-                *out_size = 0;
-                return nullptr;
-            }
+    *ciphertext_size = size + 16;
+    *ciphertext_ptr = new uint8_t[*ciphertext_size];
+    *deleter_ptr = default_deleter;
 
-            std::vector<uint8_t> ciphertext(ciphertext_ptr, ciphertext_ptr + size);
-            std::vector<uint8_t> key(key_ptr, key_ptr + AES_KEY_SIZE);
+    uint8_t iv[16];
+    random_array(iv);
 
-            std::array<uint8_t, NB * (NR + 1) * 4> round_keys;
-            key_expansion(key.data(), round_keys.data());
+    memcpy(*ciphertext_ptr, iv, 16);
 
-            std::vector<uint8_t> decrypted(ciphertext.size());
+    CTR_Process(plaintext_ptr, *ciphertext_ptr + 16, size, key_ptr, iv);
 
-            for (size_t i = 0; i < ciphertext.size(); i += AES_BLOCK_SIZE) {
-                std::memcpy(decrypted.data() + i, ciphertext.data() + i, AES_BLOCK_SIZE);
-                decrypt_block(decrypted.data() + i, round_keys.data());
-            }
+    return true;
+}
 
-            std::vector<uint8_t> plaintext = pkcs7_unpad(decrypted, AES_BLOCK_SIZE);
-
-            *out_size = plaintext.size();
-            return vector_to_raw(plaintext);
-        } catch (const std::exception& e) {
-            std::cerr << "Decryption error: " << e.what() << std::endl;
-            *out_size = 0;
-            return nullptr;
-        }
+EXPORT bool decrypt(
+    const uint8_t* ciphertext_ptr,
+    const size_t size,
+    const uint8_t* key_ptr,
+    uint8_t** plaintext_ptr,
+    size_t* plaintext_size,
+    Deleter* deleter_ptr
+) {
+    if (!ciphertext_ptr || !key_ptr || !plaintext_ptr || !plaintext_size || !deleter_ptr || size < 16) {
+        return false;
     }
+
+    *plaintext_size = size - 16;
+    *plaintext_ptr = new uint8_t[*plaintext_size];
+    *deleter_ptr = default_deleter;
+
+    uint8_t iv[16];
+    memcpy(iv, ciphertext_ptr, 16);
+
+    CTR_Process(ciphertext_ptr + 16, *plaintext_ptr, *plaintext_size, key_ptr, iv);
+
+    return true;
+}
+
 }

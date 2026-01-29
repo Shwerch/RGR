@@ -1,176 +1,189 @@
 #include "ngea.h"
-
-#include "pkcs7.h"
-
-#include <iostream>
+#include "rand_utils.h"
 #include <vector>
 #include <cstring>
-#include <algorithm>
+#include <numeric>
+#include <new>
 
-constexpr size_t BLOCK_SIZE = 8;
-constexpr size_t WORD_SIZE = 32;
-constexpr size_t KEY_SIZE = 32;
-constexpr size_t ROUNDS = 32;
-constexpr uint8_t ROTATION_A = 7;
-constexpr uint8_t ROTATION_B = 2;
-constexpr uint8_t ROTATION_KEY = 3;
-
-uint32_t rotate_left(uint32_t value, uint8_t shift) {
-    shift &= 31;
-    return (value << shift) | (value >> (32 - shift));
+static inline uint32_t rotl(uint32_t x, int n)
+{
+    return (x << n) | (x >> (32 - n));
 }
 
-uint32_t rotate_right(uint32_t value, uint8_t shift) {
-    shift &= 31;
-    return (value >> shift) | (value << (32 - shift));
+static inline uint32_t load32_le(const uint8_t* p) {
+    return (uint32_t)p[0] | 
+           (uint32_t)p[1] << 8 | 
+           (uint32_t)p[2] << 16 | 
+           (uint32_t)p[3] << 24;
 }
 
-void bytes_to_words(const uint8_t* bytes, uint32_t& left, uint32_t& right) {
-    left = static_cast<uint32_t>(bytes[0]) |
-           (static_cast<uint32_t>(bytes[1]) << 8) |
-           (static_cast<uint32_t>(bytes[2]) << 16) |
-           (static_cast<uint32_t>(bytes[3]) << 24);
-
-    right = static_cast<uint32_t>(bytes[4]) |
-            (static_cast<uint32_t>(bytes[5]) << 8) |
-            (static_cast<uint32_t>(bytes[6]) << 16) |
-            (static_cast<uint32_t>(bytes[7]) << 24);
+static void QuarterRound(uint32_t* a, uint32_t* b, uint32_t* c, uint32_t* d)
+{
+    *a += *b; *d ^= *a; *d = rotl(*d, 23);
+    *c += *d; *b ^= *c; *b = rotl(*b, 19);
+    *a += *b; *d ^= *a; *d = rotl(*d, 13);
+    *c += *d; *b ^= *c; *b = rotl(*b, 7);
 }
 
-void words_to_bytes(uint32_t left, uint32_t right, uint8_t* bytes) {
-    bytes[0] = static_cast<uint8_t>(left & 0xFF);
-    bytes[1] = static_cast<uint8_t>((left >> 8) & 0xFF);
-    bytes[2] = static_cast<uint8_t>((left >> 16) & 0xFF);
-    bytes[3] = static_cast<uint8_t>((left >> 24) & 0xFF);
+static void ngea_process_block(
+    const uint8_t* key_ptr,
+    uint32_t counter,
+    const uint8_t* nonce_ptr,
+    const uint8_t* input_block_ptr,
+    uint8_t* output_block_ptr,
+    size_t block_size
+)
+{
+    uint32_t initial_state[16];
+    uint32_t working_state[16];
 
-    bytes[4] = static_cast<uint8_t>(right & 0xFF);
-    bytes[5] = static_cast<uint8_t>((right >> 8) & 0xFF);
-    bytes[6] = static_cast<uint8_t>((right >> 16) & 0xFF);
-    bytes[7] = static_cast<uint8_t>((right >> 24) & 0xFF);
-}
-void generate_round_keys(const std::vector<uint8_t>& key, std::vector<uint32_t>& round_keys) {
-    const size_t words_count = key.size() / 4;
-    if (words_count == 0) {
-        round_keys.clear();
-        return;
+    initial_state[0] = 0x61707865;
+    initial_state[1] = 0x3320646e;
+    initial_state[2] = 0x79622d32;
+    initial_state[3] = 0x6b206574;
+
+    for (int i = 0; i < 8; ++i) {
+        initial_state[4 + i] = load32_le(key_ptr + i * 4);
+    }
+    initial_state[12] = counter;
+    initial_state[13] = load32_le(nonce_ptr);
+    initial_state[14] = load32_le(nonce_ptr + 4);
+    initial_state[15] = load32_le(nonce_ptr + 8);
+
+    memcpy(working_state, initial_state, sizeof(initial_state));
+
+    for (int i = 0; i < 10; ++i)
+    {
+        QuarterRound(&working_state[0], &working_state[4], &working_state[8], &working_state[12]);
+        QuarterRound(&working_state[1], &working_state[5], &working_state[9], &working_state[13]);
+        QuarterRound(&working_state[2], &working_state[6], &working_state[10], &working_state[14]);
+        QuarterRound(&working_state[3], &working_state[7], &working_state[11], &working_state[15]);
+
+        QuarterRound(&working_state[0], &working_state[5], &working_state[10], &working_state[15]);
+        QuarterRound(&working_state[1], &working_state[6], &working_state[11], &working_state[12]);
+        QuarterRound(&working_state[2], &working_state[7], &working_state[8], &working_state[13]);
+        QuarterRound(&working_state[3], &working_state[4], &working_state[9], &working_state[14]);
     }
 
-    std::vector<uint32_t> key_words(words_count);
+    uint8_t keystream_block[64];
+    uint32_t* keystream_block_32 = reinterpret_cast<uint32_t*>(keystream_block);
 
-    for (size_t i = 0; i < words_count; ++i) {
-        key_words[i] = static_cast<uint32_t>(key[i * 4]) |
-                       (static_cast<uint32_t>(key[i * 4 + 1]) << 8) |
-                       (static_cast<uint32_t>(key[i * 4 + 2]) << 16) |
-                       (static_cast<uint32_t>(key[i * 4 + 3]) << 24);
+    for (int i = 0; i < 16; ++i)
+    {
+        keystream_block_32[i] = working_state[i] + initial_state[i];
     }
 
-    round_keys.resize(ROUNDS);
-
-    for (size_t i = 0; i < std::min(words_count, ROUNDS); ++i) {
-        round_keys[i] = key_words[i];
+    for (size_t i = 0; i < block_size; ++i)
+    {
+        output_block_ptr[i] = input_block_ptr[i] ^ keystream_block[i];
     }
-
-    for (size_t i = words_count; i < ROUNDS; ++i) {
-        size_t key_idx = i % words_count;
-        key_words[key_idx] = rotate_left(key_words[key_idx], ROTATION_KEY) + round_keys[i - 1];
-        round_keys[i] = key_words[key_idx] ^ static_cast<uint32_t>(i);
-    }
-}
-
-
-void encrypt_block(uint32_t& left, uint32_t& right, const std::vector<uint32_t>& round_keys) {
-    for (size_t i = 0; i < ROUNDS; ++i) {
-        left = rotate_right(left, ROTATION_B);
-        left = left + right;
-        left = left ^ round_keys[i];
-        right = rotate_left(right, ROTATION_A);
-        right = right ^ left;
-    }
-}
-
-void decrypt_block(uint32_t& left, uint32_t& right, const std::vector<uint32_t>& round_keys) {
-    for (int i = ROUNDS - 1; i >= 0; --i) {
-        right = right ^ left;
-        right = rotate_right(right, ROTATION_A);
-        left = left ^ round_keys[i];
-        left = left - right;
-        left = rotate_left(left, ROTATION_B);
-    }
-}
-
-uint8_t* vector_to_raw(const std::vector<uint8_t>& vec) {
-    uint8_t* raw_data = new uint8_t[vec.size()];
-    std::copy_n(vec.data(), vec.size(), raw_data);
-    return raw_data;
 }
 
 extern "C" {
-    EXPORT uint8_t* encrypt(const uint8_t* plaintext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
-        try {
-            if (!plaintext_ptr || !key_ptr || !out_size) {
-                std::cerr << "null pointer provided to encrypt function" << std::endl;
-                return nullptr;
-            }
 
-            std::vector<uint8_t> plaintext(plaintext_ptr, plaintext_ptr + size);
-            std::vector<uint8_t> key(key_ptr, key_ptr + KEY_SIZE);
-
-            std::vector<uint8_t> padded = pkcs7_pad(plaintext, BLOCK_SIZE);
-            std::vector<uint32_t> round_keys;
-            generate_round_keys(key, round_keys);
-
-            std::vector<uint8_t> ciphertext(padded.size());
-
-            for (size_t i = 0; i < padded.size(); i += BLOCK_SIZE) {
-                uint32_t left, right;
-                bytes_to_words(&padded[i], left, right);
-                encrypt_block(left, right, round_keys);
-                words_to_bytes(left, right, &ciphertext[i]);
-            }
-
-            *out_size = ciphertext.size();
-            return vector_to_raw(ciphertext);
-
-        } catch (const std::exception& e) {
-            std::cerr << "Error during encryption: " << e.what() << std::endl;
-            return nullptr;
-        }
+    void default_deleter(uint8_t* ptr)
+    {
+        delete[] ptr;
     }
 
-    EXPORT uint8_t* decrypt(const uint8_t* ciphertext_ptr, const size_t size, const uint8_t* key_ptr, size_t* out_size) {
-        try {
-            if (!ciphertext_ptr || !key_ptr || !out_size) {
-                std::cerr << "null pointer provided to decrypt function" << std::endl;
-                return nullptr;
-            }
-
-            if (size % BLOCK_SIZE != 0) {
-                std::cerr << "ciphertext size must be multiple of block size" << std::endl;
-                return nullptr;
-            }
-
-            std::vector<uint8_t> ciphertext(ciphertext_ptr, ciphertext_ptr + size);
-            std::vector<uint8_t> key(key_ptr, key_ptr + KEY_SIZE);
-
-            std::vector<uint32_t> round_keys;
-            generate_round_keys(key, round_keys);
-
-            std::vector<uint8_t> decrypted(ciphertext.size());
-
-            for (size_t i = 0; i < ciphertext.size(); i += BLOCK_SIZE) {
-                uint32_t left, right;
-                bytes_to_words(&ciphertext[i], left, right);
-                decrypt_block(left, right, round_keys);
-                words_to_bytes(left, right, &decrypted[i]);
-            }
-
-            std::vector<uint8_t> plaintext = pkcs7_unpad(decrypted, BLOCK_SIZE);
-            *out_size = plaintext.size();
-            return vector_to_raw(plaintext);
-
-        } catch (const std::exception& e) {
-            std::cerr << "Error during decryption: " << e.what() << std::endl;
-            return nullptr;
+    EXPORT bool encrypt(
+        const uint8_t* plaintext_ptr,
+        const size_t size,
+        const uint8_t* key_ptr,
+        uint8_t** ciphertext_ptr,
+        size_t* ciphertext_size,
+        Deleter* deleter_ptr
+    )
+    {
+        if (!plaintext_ptr || !key_ptr || !ciphertext_ptr || !ciphertext_size || !deleter_ptr)
+        {
+            return false;
         }
+
+        constexpr size_t nonce_size = 12;
+        constexpr size_t block_size = 64;
+
+        *ciphertext_size = nonce_size + size;
+        *ciphertext_ptr = new (std::nothrow) uint8_t[*ciphertext_size];
+        if (!*ciphertext_ptr)
+        {
+            return false;
+        }
+        *deleter_ptr = default_deleter;
+
+        uint8_t nonce[nonce_size];
+        random_array<nonce_size>(nonce);
+        memcpy(*ciphertext_ptr, nonce, nonce_size);
+
+        uint8_t* out_ptr = *ciphertext_ptr + nonce_size;
+        const uint8_t* in_ptr = plaintext_ptr;
+        size_t remaining_size = size;
+        uint32_t counter = 0;
+
+        while (remaining_size >= block_size)
+        {
+            ngea_process_block(key_ptr, counter, nonce, in_ptr, out_ptr, block_size);
+            in_ptr += block_size;
+            out_ptr += block_size;
+            remaining_size -= block_size;
+            counter++;
+        }
+
+        if (remaining_size > 0)
+        {
+            ngea_process_block(key_ptr, counter, nonce, in_ptr, out_ptr, remaining_size);
+        }
+
+        return true;
     }
+
+    EXPORT bool decrypt(
+        const uint8_t* ciphertext_ptr,
+        const size_t size,
+        const uint8_t* key_ptr,
+        uint8_t** plaintext_ptr,
+        size_t* plaintext_size,
+        Deleter* deleter_ptr
+    )
+    {
+        constexpr size_t nonce_size = 12;
+        constexpr size_t block_size = 64;
+
+        if (!ciphertext_ptr || size < nonce_size || !key_ptr || !plaintext_ptr || !plaintext_size || !deleter_ptr)
+        {
+            return false;
+        }
+
+        *plaintext_size = size - nonce_size;
+        *plaintext_ptr = new (std::nothrow) uint8_t[*plaintext_size];
+        if (!*plaintext_ptr)
+        {
+            return false;
+        }
+        *deleter_ptr = default_deleter;
+
+        const uint8_t* nonce = ciphertext_ptr;
+        
+        uint8_t* out_ptr = *plaintext_ptr;
+        const uint8_t* in_ptr = ciphertext_ptr + nonce_size;
+        size_t remaining_size = *plaintext_size;
+        uint32_t counter = 0;
+
+        while (remaining_size >= block_size)
+        {
+            ngea_process_block(key_ptr, counter, nonce, in_ptr, out_ptr, block_size);
+            in_ptr += block_size;
+            out_ptr += block_size;
+            remaining_size -= block_size;
+            counter++;
+        }
+
+        if (remaining_size > 0)
+        {
+            ngea_process_block(key_ptr, counter, nonce, in_ptr, out_ptr, remaining_size);
+        }
+
+        return true;
+    }
+
 }
