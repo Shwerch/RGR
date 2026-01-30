@@ -24,7 +24,6 @@ struct Arguments {
     std::string keyPath;
     bool generateKey = false;
     bool readKey = false;
-    bool promptKey = false;
     std::string saveKeyPath;
     bool writeKey = false;
 };

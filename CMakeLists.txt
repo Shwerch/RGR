@@ -9,14 +9,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(include)
 
 set(UTILS_SOURCES
-        #utils/filesystem.cpp
-        #utils/hex_utils.cpp
-        #utils/io_utils.cpp
-        #utils/library_loader.cpp
+        utils/filesystem.cpp
+        utils/io_handlers.cpp
+        utils/rand_utils.cpp
         utils/parser.cpp
-        #utils/rand_utils.cpp
-        #utils/string_utils.cpp
-        #utils/pkcs7.cpp
 )
 
 add_library(utils STATIC ${UTILS_SOURCES})

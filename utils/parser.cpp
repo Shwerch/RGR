@@ -23,7 +23,6 @@ Key Input:
   -k, --key <PATH>                  Path to the key file.
   -g, --generate-key                Generate a new random key.
   -r, --read-key                    Read key from stdin.
-  -p, --promt-key                   Promt for the key interactively on the console.
 
 Key Output:
   -s, --save-key <PATH>             Save the generated key to a file.
@@ -86,8 +85,6 @@ Arguments parser(int argc, char** argv) {
             args.generateKey = true;
         } else if (arg == "-r" || arg == "--read-key") {
             args.readKey = true;
-        } else if (arg == "-p" || arg == "--promt-key") {
-            args.promptKey = true;
         } else if (arg == "-s" || arg == "--save-key") {
             if (i + 1 >= argc) throw std::runtime_error("Missing argument for --save-key");
             args.saveKeyPath = argv[++i];
@@ -108,10 +105,9 @@ Arguments parser(int argc, char** argv) {
     if (!args.keyPath.empty()) keyMethods++;
     if (args.generateKey) keyMethods++;
     if (args.readKey) keyMethods++;
-    if (args.promptKey) keyMethods++;
 
     if (keyMethods != 1) {
-        throw std::runtime_error("Exactly one key source must be specified (--key, --generate-key, --read-key, --promt-key)");
+        throw std::runtime_error("Exactly one key source must be specified (--key, --generate-key, --read-key)");
     }
 
     if (args.inputPath.empty() && args.readKey) {
