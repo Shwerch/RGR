@@ -1,5 +1,6 @@
 #include "ngea.h"
 #include "rand_utils.h"
+
 #include <vector>
 #include <cstring>
 #include <numeric>
@@ -110,7 +111,7 @@ static void ngea_process_block(
         *deleter_ptr = default_deleter;
 
         uint8_t nonce[nonce_size];
-        random_array<nonce_size>(nonce);
+        random_array(nonce);
         memcpy(*ciphertext_ptr, nonce, nonce_size);
 
         uint8_t* out_ptr = *ciphertext_ptr + nonce_size;

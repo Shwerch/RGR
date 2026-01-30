@@ -22,8 +22,7 @@ void writeFile(const std::string& path, const std::vector<uint8_t>& data) {
 }
 
 std::vector<uint8_t> readFromStdin() {
-    // Note: Reopening cin in binary mode is platform specific, 
-    // assuming standard stream reading here for portability or text/binary mix.
+    std::cin.sync_with_stdio(false);
     std::cin >> std::noskipws;
     return std::vector<uint8_t>((std::istream_iterator<char>(std::cin)),
                                  std::istream_iterator<char>());
@@ -31,4 +30,5 @@ std::vector<uint8_t> readFromStdin() {
 
 void writeToStdout(const std::vector<uint8_t>& data) {
     std::cout.write(reinterpret_cast<const char*>(data.data()), data.size());
+    std::cout.flush();
 }

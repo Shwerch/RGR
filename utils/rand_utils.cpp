@@ -19,5 +19,6 @@ void random_array(uint8_t (&random_bytes)[N]) {
 }
 
 template void random_array(uint8_t (&)[8]);
+template void random_array(uint8_t (&)[12]);
 template void random_array(uint8_t (&)[16]);
 template void random_array(uint8_t (&)[32]);

@@ -5,7 +5,7 @@ set "APP_NAME=Cryptum"
 set "CRYPTUM_DIR=%LocalAppData%\%APP_NAME%"
 set "SRC_DIR=win-build-release"
 
-cmake -S . -B "%SRC_DIR%" -G "Visual Studio 17 2022"
+cmake -S . -B "%SRC_DIR%" -G "Visual Studio 18 2026"
 if errorlevel 1 (
     echo CMake Configuration failed!
     pause
