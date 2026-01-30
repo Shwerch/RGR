@@ -15,7 +15,7 @@ extern "C" {
         const uint8_t* plaintext_ptr,
         const size_t size,
         const uint8_t* key_ptr,
-        char** ciphertext_ptr,
+        uint8_t** ciphertext_ptr,
         size_t* ciphertext_size,
         Deleter* deleter_ptr
     );
@@ -23,7 +23,7 @@ extern "C" {
         const uint8_t* ciphertext_ptr,
         const size_t size,
         const uint8_t* key_ptr,
-        char** plaintext_ptr,
+        uint8_t** plaintext_ptr,
         size_t* plaintext_size,
         Deleter* deleter_ptr
     );

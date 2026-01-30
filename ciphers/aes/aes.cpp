@@ -1,6 +1,8 @@
 #include "aes.h"
 #include "rand_utils.h"
+
 #include <cstring>
+#include <new>
 #include <vector>
 
 const uint8_t sbox[256] = {
@@ -22,138 +24,189 @@ const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-const uint8_t Rcon[11] = {
+const uint8_t rcon[11] = {
     0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 };
 
-void KeyExpansion(const uint8_t* key, uint8_t* roundKeys) {
-    unsigned i, j, k;
-    uint8_t temp[4]; 
+void release_memory(uint8_t* ptr) {
+    delete[] ptr;
+}
 
-    for (i = 0; i < 8; ++i) {
-        roundKeys[i * 4] = key[i * 4];
-        roundKeys[i * 4 + 1] = key[i * 4 + 1];
-        roundKeys[i * 4 + 2] = key[i * 4 + 2];
-        roundKeys[i * 4 + 3] = key[i * 4 + 3];
+struct AesContext {
+    uint8_t round_keys[240];
+};
+
+void key_expansion(const uint8_t* key, AesContext& ctx) {
+    unsigned i, j, k;
+    uint8_t tempa[4]; 
+
+    for (i = 0; i < 32; ++i) {
+        ctx.round_keys[i] = key[i];
     }
 
     for (i = 8; i < 60; ++i) {
-        k = (i - 1) * 4;
-        temp[0] = roundKeys[k];
-        temp[1] = roundKeys[k + 1];
-        temp[2] = roundKeys[k + 2];
-        temp[3] = roundKeys[k + 3];
-
-        if (i % 8 == 0) {
-            const uint8_t t = temp[0];
-            temp[0] = sbox[temp[1]] ^ Rcon[i / 8];
-            temp[1] = sbox[temp[2]];
-            temp[2] = sbox[temp[3]];
-            temp[3] = sbox[t];
-        } else if (i % 8 == 4) {
-            temp[0] = sbox[temp[0]];
-            temp[1] = sbox[temp[1]];
-            temp[2] = sbox[temp[2]];
-            temp[3] = sbox[temp[3]];
+        {
+            k = (i - 1) * 4;
+            tempa[0] = ctx.round_keys[k + 0];
+            tempa[1] = ctx.round_keys[k + 1];
+            tempa[2] = ctx.round_keys[k + 2];
+            tempa[3] = ctx.round_keys[k + 3];
         }
 
-        j = (i - 8) * 4;
-        k = i * 4;
-        roundKeys[k] = roundKeys[j] ^ temp[0];
-        roundKeys[k + 1] = roundKeys[j + 1] ^ temp[1];
-        roundKeys[k + 2] = roundKeys[j + 2] ^ temp[2];
-        roundKeys[k + 3] = roundKeys[j + 3] ^ temp[3];
+        if (i % 8 == 0) {
+            {
+                const uint8_t u8tmp = tempa[0];
+                tempa[0] = tempa[1];
+                tempa[1] = tempa[2];
+                tempa[2] = tempa[3];
+                tempa[3] = u8tmp;
+            }
+            {
+                tempa[0] = sbox[tempa[0]];
+                tempa[1] = sbox[tempa[1]];
+                tempa[2] = sbox[tempa[2]];
+                tempa[3] = sbox[tempa[3]];
+            }
+            tempa[0] = tempa[0] ^ rcon[i / 8];
+        } else if (i % 8 == 4) {
+            {
+                tempa[0] = sbox[tempa[0]];
+                tempa[1] = sbox[tempa[1]];
+                tempa[2] = sbox[tempa[2]];
+                tempa[3] = sbox[tempa[3]];
+            }
+        }
+
+        j = i * 4;
+        k = (i - 8) * 4;
+        ctx.round_keys[j + 0] = ctx.round_keys[k + 0] ^ tempa[0];
+        ctx.round_keys[j + 1] = ctx.round_keys[k + 1] ^ tempa[1];
+        ctx.round_keys[j + 2] = ctx.round_keys[k + 2] ^ tempa[2];
+        ctx.round_keys[j + 3] = ctx.round_keys[k + 3] ^ tempa[3];
     }
 }
 
-void AddRoundKey(uint8_t* state, const uint8_t* roundKey) {
-    for (int i = 0; i < 16; ++i) {
-        state[i] ^= roundKey[i];
+void add_round_key(uint8_t round, uint8_t* state, const uint8_t* round_keys) {
+    for (uint8_t i = 0; i < 16; ++i) {
+        state[i] ^= round_keys[round * 16 + i];
     }
 }
 
-void SubBytes(uint8_t* state) {
-    for (int i = 0; i < 16; ++i) {
+void sub_bytes(uint8_t* state) {
+    for (uint8_t i = 0; i < 16; ++i) {
         state[i] = sbox[state[i]];
     }
 }
 
-void ShiftRows(uint8_t* state) {
-    uint8_t temp;
-    temp = state[1]; state[1] = state[5]; state[5] = state[9]; state[9] = state[13]; state[13] = temp;
-    temp = state[2]; state[2] = state[10]; state[10] = temp;
-    temp = state[6]; state[6] = state[14]; state[14] = temp;
-    temp = state[15]; state[15] = state[11]; state[11] = state[7]; state[7] = state[3]; state[3] = temp;
+void shift_rows(uint8_t* state) {
+    uint8_t temp[4];
+
+    temp[0] = state[1];
+    state[1] = state[5];
+    state[5] = state[9];
+    state[9] = state[13];
+    state[13] = temp[0];
+
+    temp[0] = state[2];
+    temp[1] = state[6];
+    state[2] = state[10];
+    state[6] = state[14];
+    state[10] = temp[0];
+    state[14] = temp[1];
+
+    temp[0] = state[15];
+    state[15] = state[11];
+    state[11] = state[7];
+    state[7] = state[3];
+    state[3] = temp[0];
 }
 
-void MixColumns(uint8_t* state) {
-    uint8_t Tmp, Tm, t;
+uint8_t galois_mul(uint8_t a, uint8_t b) {
+    uint8_t p = 0;
+    for (uint8_t counter = 0; counter < 8; counter++) {
+        if ((b & 1) != 0) {
+            p ^= a;
+        }
+        bool hi_bit_set = (a & 0x80) != 0;
+        a <<= 1;
+        if (hi_bit_set) {
+            a ^= 0x1b;
+        }
+        b >>= 1;
+    }
+    return p;
+}
+
+void mix_columns(uint8_t* state) {
+    uint8_t column[4];
+    uint8_t cpy[4];
     for (int i = 0; i < 4; ++i) {
-        t = state[i * 4];
-        Tmp = state[i * 4] ^ state[i * 4 + 1] ^ state[i * 4 + 2] ^ state[i * 4 + 3];
-        Tm = state[i * 4] ^ state[i * 4 + 1]; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
-        state[i * 4] ^= Tm ^ Tmp;
-        Tm = state[i * 4 + 1] ^ state[i * 4 + 2]; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
-        state[i * 4 + 1] ^= Tm ^ Tmp;
-        Tm = state[i * 4 + 2] ^ state[i * 4 + 3]; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
-        state[i * 4 + 2] ^= Tm ^ Tmp;
-        Tm = state[i * 4 + 3] ^ t; Tm = (Tm & 0x80) ? (Tm << 1) ^ 0x1b : (Tm << 1);
-        state[i * 4 + 3] ^= Tm ^ Tmp;
+        for (int j = 0; j < 4; ++j) {
+            column[j] = state[i * 4 + j];
+            cpy[j] = column[j];
+        }
+        column[0] = galois_mul(cpy[0], 2) ^ galois_mul(cpy[1], 3) ^ cpy[2] ^ cpy[3];
+        column[1] = cpy[0] ^ galois_mul(cpy[1], 2) ^ galois_mul(cpy[2], 3) ^ cpy[3];
+        column[2] = cpy[0] ^ cpy[1] ^ galois_mul(cpy[2], 2) ^ galois_mul(cpy[3], 3);
+        column[3] = galois_mul(cpy[0], 3) ^ cpy[1] ^ cpy[2] ^ galois_mul(cpy[3], 2);
+        for (int j = 0; j < 4; ++j) {
+            state[i * 4 + j] = column[j];
+        }
     }
 }
 
-void Cipher(const uint8_t* in, uint8_t* out, const uint8_t* roundKeys) {
+void aes_cipher(const uint8_t* input, uint8_t* output, const AesContext& ctx) {
     uint8_t state[16];
-    memcpy(state, in, 16);
-
-    AddRoundKey(state, roundKeys);
-
-    for (int round = 1; round < 14; ++round) {
-        SubBytes(state);
-        ShiftRows(state);
-        MixColumns(state);
-        AddRoundKey(state, roundKeys + round * 16);
+    for (int i = 0; i < 16; ++i) {
+        state[i] = input[i];
     }
 
-    SubBytes(state);
-    ShiftRows(state);
-    AddRoundKey(state, roundKeys + 14 * 16);
+    add_round_key(0, state, ctx.round_keys);
 
-    memcpy(out, state, 16);
+    for (uint8_t round = 1; round < 14; ++round) {
+        sub_bytes(state);
+        shift_rows(state);
+        mix_columns(state);
+        add_round_key(round, state, ctx.round_keys);
+    }
+
+    sub_bytes(state);
+    shift_rows(state);
+    add_round_key(14, state, ctx.round_keys);
+
+    for (int i = 0; i < 16; ++i) {
+        output[i] = state[i];
+    }
 }
 
-void IncrementCounter(uint8_t* counter) {
+void increment_iv(uint8_t* iv) {
     for (int i = 15; i >= 0; --i) {
-        if (++counter[i] != 0) {
+        iv[i]++;
+        if (iv[i] != 0) {
             break;
         }
     }
 }
 
-void CTR_Process(const uint8_t* input, uint8_t* output, size_t size, const uint8_t* key, uint8_t* iv) {
-    uint8_t roundKeys[240];
-    KeyExpansion(key, roundKeys);
-
-    uint8_t counter[16];
-    memcpy(counter, iv, 16);
+void ctr_process(const uint8_t* in, uint8_t* out, size_t len, const uint8_t* key, uint8_t* iv) {
+    AesContext ctx;
+    key_expansion(key, ctx);
 
     uint8_t keystream[16];
+    uint8_t curr_iv[16];
+    std::memcpy(curr_iv, iv, 16);
+
     size_t i = 0;
+    while (i < len) {
+        aes_cipher(curr_iv, keystream, ctx);
+        increment_iv(curr_iv);
 
-    while (i < size) {
-        Cipher(counter, keystream, roundKeys);
-        IncrementCounter(counter);
-
-        size_t block_size = (size - i) < 16 ? (size - i) : 16;
-        for (size_t j = 0; j < block_size; ++j) {
-            output[i + j] = input[i + j] ^ keystream[j];
+        size_t block_len = (len - i) < 16 ? (len - i) : 16;
+        for (size_t j = 0; j < block_len; ++j) {
+            out[i + j] = in[i + j] ^ keystream[j];
         }
-        i += block_size;
+        i += block_len;
     }
-}
-
-void default_deleter(uint8_t* ptr) {
-    delete[] ptr;
 }
 
 bool encrypt(
@@ -168,18 +221,25 @@ bool encrypt(
         return false;
     }
 
-    *ciphertext_size = size + 16;
-    *ciphertext_ptr = new uint8_t[*ciphertext_size];
-    *deleter_ptr = default_deleter;
+    try {
+        size_t total_size = 16 + size;
+        uint8_t* buffer = new uint8_t[total_size];
+        
+        uint8_t iv[16];
+        random_array(iv);
 
-    uint8_t iv[16];
-    random_array(iv);
+        std::memcpy(buffer, iv, 16);
 
-    memcpy(*ciphertext_ptr, iv, 16);
+        ctr_process(plaintext_ptr, buffer + 16, size, key_ptr, iv);
 
-    CTR_Process(plaintext_ptr, *ciphertext_ptr + 16, size, key_ptr, iv);
-
-    return true;
+        *ciphertext_ptr = buffer;
+        *ciphertext_size = total_size;
+        *deleter_ptr = release_memory;
+        
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
 bool decrypt(
@@ -194,14 +254,21 @@ bool decrypt(
         return false;
     }
 
-    *plaintext_size = size - 16;
-    *plaintext_ptr = new uint8_t[*plaintext_size];
-    *deleter_ptr = default_deleter;
+    try {
+        size_t actual_size = size - 16;
+        uint8_t* buffer = new uint8_t[actual_size];
 
-    uint8_t iv[16];
-    memcpy(iv, ciphertext_ptr, 16);
+        uint8_t iv[16];
+        std::memcpy(iv, ciphertext_ptr, 16);
 
-    CTR_Process(ciphertext_ptr + 16, *plaintext_ptr, *plaintext_size, key_ptr, iv);
+        ctr_process(ciphertext_ptr + 16, buffer, actual_size, key_ptr, iv);
 
-    return true;
+        *plaintext_ptr = buffer;
+        *plaintext_size = actual_size;
+        *deleter_ptr = release_memory;
+
+        return true;
+    } catch (...) {
+        return false;
+    }
 }

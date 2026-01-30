@@ -13,6 +13,7 @@ set(UTILS_SOURCES
         utils/io_handlers.cpp
         utils/rand_utils.cpp
         utils/parser.cpp
+        utils/library_loader.cpp
 )
 
 add_library(utils STATIC ${UTILS_SOURCES})
