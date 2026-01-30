@@ -152,13 +152,11 @@ void CTR_Process(const uint8_t* input, uint8_t* output, size_t size, const uint8
     }
 }
 
-extern "C" {
-
 void default_deleter(uint8_t* ptr) {
     delete[] ptr;
 }
 
-EXPORT bool encrypt(
+bool encrypt(
     const uint8_t* plaintext_ptr,
     const size_t size,
     const uint8_t* key_ptr,
@@ -184,7 +182,7 @@ EXPORT bool encrypt(
     return true;
 }
 
-EXPORT bool decrypt(
+bool decrypt(
     const uint8_t* ciphertext_ptr,
     const size_t size,
     const uint8_t* key_ptr,
@@ -206,6 +204,4 @@ EXPORT bool decrypt(
     CTR_Process(ciphertext_ptr + 16, *plaintext_ptr, *plaintext_size, key_ptr, iv);
 
     return true;
-}
-
 }

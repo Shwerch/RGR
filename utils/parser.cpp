@@ -52,6 +52,8 @@ std::string read_stream_string(std::istream& input) {
 Arguments parse_arguments(int argc, const char** argv) {
     Arguments args;
     bool output_format_set = false;
+    bool has_algorithm = false;
+    bool has_mode = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string current_arg = argv[i];
@@ -78,9 +80,11 @@ Arguments parse_arguments(int argc, const char** argv) {
                 has_val = true;
             }
             if (has_val) {
+                has_algorithm = true;
                 if (val == "des") args.algorithm = Algorithm::des;
                 else if (val == "aes") args.algorithm = Algorithm::aes;
                 else if (val == "ngea") args.algorithm = Algorithm::ngea;
+                else has_algorithm = false;
             }
         } else if (key == "-m" || key == "--mode") {
             if (!has_val && i + 1 < argc && argv[i + 1][0] != '-') {
@@ -88,8 +92,10 @@ Arguments parse_arguments(int argc, const char** argv) {
                 has_val = true;
             }
             if (has_val) {
-                if (val == "encrypt") args.mode = Mode::encrypt;
-                else if (val == "decrypt") args.mode = Mode::decrypt;
+                has_mode = true;
+                if (val == "e" || val == "encrypt") args.mode = Mode::encrypt;
+                else if (val == "d" || val == "decrypt") args.mode = Mode::decrypt;
+                else has_mode = false;
             }
         } else if (key == "-i" || key == "--input") {
             if (!has_val && i + 1 < argc && argv[i + 1][0] != '-') {
@@ -177,10 +183,22 @@ Arguments parse_arguments(int argc, const char** argv) {
         }
     }
 
+    if (!has_algorithm) {
+        throw std::runtime_error("Invalid arguments: --algorothm is not provided.");
+    }
+    if (!has_mode) {
+        throw std::runtime_error("Invalid arguments: --mode is not provided.");
+    }
+
     return args;
 }
 
 void check_arguments(const Arguments& args) {
+    if (args.help) {
+        std::cout << HELP_TEXT << std::endl;
+        exit(0);
+    }
+
     if (!args.input.has_value() && args.read_key) {
         throw std::runtime_error("Invalid arguments: --input is not provided, but --read-key is specified. Key cannot be read from stdin if input is also stdin.");
     }
@@ -214,11 +232,6 @@ void check_arguments(const Arguments& args) {
     if (key_output_count > 1) {
         throw std::runtime_error("Invalid arguments: Multiple key outputs specified. Please specify only one of: --save-key, --write-key.");
     }
-
-    if (args.help) {
-        std::cout << HELP << std::endl;
-        exit(0);
-    }
 }
 
 std::vector<uint8_t> get_key(const Arguments& args) {
@@ -231,8 +244,7 @@ std::vector<uint8_t> get_key(const Arguments& args) {
     }
 
     std::string raw_input;
-    bool is_binary_source = false;
-
+    
     if (args.key.has_value()) {
         std::ifstream file(*args.key, std::ios::binary);
         if (!file.is_open()) throw std::runtime_error("Cannot open key file");

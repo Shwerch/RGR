@@ -79,14 +79,12 @@ static void ngea_process_block(
     }
 }
 
-extern "C" {
-
     void default_deleter(uint8_t* ptr)
     {
         delete[] ptr;
     }
 
-    EXPORT bool encrypt(
+    bool encrypt(
         const uint8_t* plaintext_ptr,
         const size_t size,
         const uint8_t* key_ptr,
@@ -137,7 +135,7 @@ extern "C" {
         return true;
     }
 
-    EXPORT bool decrypt(
+    bool decrypt(
         const uint8_t* ciphertext_ptr,
         const size_t size,
         const uint8_t* key_ptr,
@@ -185,5 +183,3 @@ extern "C" {
 
         return true;
     }
-
-}

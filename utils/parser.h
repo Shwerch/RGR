@@ -57,7 +57,7 @@ struct Arguments {
     bool help = false;
 };
 
-constexpr auto HELP = R"(
+constexpr auto HELP_TEXT = R"(
 usage: cryptum --algorithm <alg> --mode <mode> [OPTIONS]
 
 Uses encryption algorithms AES, DES and NGEA for data encryption and decryption.

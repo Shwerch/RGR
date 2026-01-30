@@ -10,21 +10,21 @@
 #endif
 
 extern "C" {
-    typedef void (*Deleter)(char*);
+    typedef void (*Deleter)(uint8_t*);
     EXPORT bool encrypt(
         const uint8_t* plaintext_ptr,
         const size_t size,
         const uint8_t* key_ptr,
         char** ciphertext_ptr,
         size_t* ciphertext_size,
-        Deleter* deleter_ptr,
+        Deleter* deleter_ptr
     );
     EXPORT bool decrypt(
         const uint8_t* ciphertext_ptr,
         const size_t size,
         const uint8_t* key_ptr,
         char** plaintext_ptr,
-        size_t* plaintext_size
-        Deleter* deleter_ptr,
+        size_t* plaintext_size,
+        Deleter* deleter_ptr
     );
 }
