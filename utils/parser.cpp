@@ -49,11 +49,18 @@ std::string read_stream_string(std::istream& input) {
     return std::string(std::istreambuf_iterator<char>(input), {});
 }
 
-Arguments parse_arguments(int argc, const char** argv) {
-    Arguments args;
+void print_help() {
+    std::cout << HELP_TEXT << std::endl;
+    exit(0);
+}
+
+RawArguments parse_arguments(int argc, const char** argv) {
+    if (argc < 2) {
+        print_help();
+    }
+
+    RawArguments args;
     bool output_format_set = false;
-    bool has_algorithm = false;
-    bool has_mode = false;
 
     for (int i = 1; i < argc; ++i) {
         std::string current_arg = argv[i];
@@ -80,11 +87,9 @@ Arguments parse_arguments(int argc, const char** argv) {
                 has_val = true;
             }
             if (has_val) {
-                has_algorithm = true;
                 if (val == "des") args.algorithm = Algorithm::des;
                 else if (val == "aes") args.algorithm = Algorithm::aes;
                 else if (val == "ngea") args.algorithm = Algorithm::ngea;
-                else has_algorithm = false;
             }
         } else if (key == "-m" || key == "--mode") {
             if (!has_val && i + 1 < argc && argv[i + 1][0] != '-') {
@@ -92,10 +97,8 @@ Arguments parse_arguments(int argc, const char** argv) {
                 has_val = true;
             }
             if (has_val) {
-                has_mode = true;
                 if (val == "e" || val == "encrypt") args.mode = Mode::encrypt;
                 else if (val == "d" || val == "decrypt") args.mode = Mode::decrypt;
-                else has_mode = false;
             }
         } else if (key == "-i" || key == "--input") {
             if (!has_val && i + 1 < argc && argv[i + 1][0] != '-') {
@@ -148,8 +151,7 @@ Arguments parse_arguments(int argc, const char** argv) {
                 has_val = true;
             }
             if (has_val) {
-                if (val == "text") args.read_key_format = ReadFormat::text;
-                else if (val == "hex") args.read_key_format = ReadFormat::hex;
+                if (val == "hex") args.read_key_format = ReadFormat::hex;
                 else if (val == "binary") args.read_key_format = ReadFormat::binary;
             }
         } else if (key == "-S" || key == "--save-key") {
@@ -166,8 +168,7 @@ Arguments parse_arguments(int argc, const char** argv) {
                 has_val = true;
             }
             if (has_val) {
-                if (val == "text") args.write_key_format = WriteFormat::text;
-                else if (val == "hex") args.write_key_format = WriteFormat::hex;
+                if (val == "hex") args.write_key_format = WriteFormat::hex;
                 else if (val == "binary") args.write_key_format = WriteFormat::binary;
             }
         } else if (key == "-h" || key == "--help") {
@@ -183,20 +184,21 @@ Arguments parse_arguments(int argc, const char** argv) {
         }
     }
 
-    if (!has_algorithm) {
-        throw std::runtime_error("Invalid arguments: --algorothm is not provided.");
-    }
-    if (!has_mode) {
-        throw std::runtime_error("Invalid arguments: --mode is not provided.");
-    }
-
     return args;
 }
 
-void check_arguments(const Arguments& args) {
-    if (args.help) {
-        std::cout << HELP_TEXT << std::endl;
-        exit(0);
+Arguments check_arguments(const RawArguments& args) {
+
+    if (args.help.has_value() && args.help.value()) {
+        print_help();
+    }
+
+    if (!args.algorithm.has_value()) {
+        throw std::runtime_error("Invalid arguments: --algorothm is not provided.");
+    }
+
+    if (!args.mode.has_value()) {
+        throw std::runtime_error("Invalid arguments: --mode is not provided.");
     }
 
     if (!args.input.has_value() && args.read_key) {
@@ -208,10 +210,10 @@ void check_arguments(const Arguments& args) {
     }
 
     int key_input_count = 0;
-    if (args.key.has_value()) key_input_count++;
-    if (args.generate_key) key_input_count++;
-    if (args.read_key) key_input_count++;
-    if (args.promt_key) key_input_count++;
+    if (args.key.has_value()) ++key_input_count;
+    if (args.generate_key) ++key_input_count;
+    if (args.read_key) ++key_input_count;
+    if (args.promt_key) ++key_input_count;
 
     if (key_input_count == 0) {
         throw std::runtime_error("Invalid arguments: No key source specified. Please provide one of: --key, --generate-key, --read-key, --promt-key.");
@@ -222,16 +224,40 @@ void check_arguments(const Arguments& args) {
     }
 
     int key_output_count = 0;
-    if (args.save_key.has_value()) key_output_count++;
-    if (args.write_key) key_output_count++;
-
-    if (key_output_count == 0) {
-        throw std::runtime_error("Invalid arguments: No key output specified. Please provide one of: --save-key, --write-key.");
-    }
+    if (args.save_key.has_value()) ++key_output_count;
+    if (args.write_key) ++key_output_count;
 
     if (key_output_count > 1) {
         throw std::runtime_error("Invalid arguments: Multiple key outputs specified. Please specify only one of: --save-key, --write-key.");
     }
+
+    Arguments result;
+    result.algorithm = args.algorithm.value();
+    result.mode = args.mode.value();
+    result.input_format = args.input_format.value();
+    result.output_format = args.output_format.value();
+    if (args.input.has_value()) {
+        result.input = args.input.value();
+    }
+    if (args.output.has_value()) {
+        result.output = args.output.value();
+    }
+    if (args.key.has_value()) {
+        result.key = args.key.value();
+    }
+    result.generate_key = args.generate_key.value();
+    result.read_key = args.read_key.value();
+    result.promt_key = args.promt_key.value();
+    result.read_key_format = args.read_key_format.value();
+    if (args.save_key.has_value()) {
+        result.save_key = args.save_key.value();
+    }
+    result.write_key = args.write_key.value();
+    result.write_key_format = args.write_key_format.value();
+    result.help = args.help.value();
+
+    return result;
+    
 }
 
 std::vector<uint8_t> get_key(const Arguments& args) {
@@ -267,8 +293,6 @@ std::vector<uint8_t> get_key(const Arguments& args) {
 
     if (args.read_key_format == ReadFormat::hex) {
         return hex_to_bytes(raw_input);
-    } else if (args.read_key_format == ReadFormat::text) {
-        return std::vector<uint8_t>(raw_input.begin(), raw_input.end());
     }
     
     return std::vector<uint8_t>(raw_input.begin(), raw_input.end());
@@ -282,8 +306,6 @@ void export_key(const Arguments& args, const std::vector<uint8_t>& key_data) {
 
     if (args.write_key_format == WriteFormat::hex) {
         output_data = bytes_to_hex(key_data);
-    } else if (args.write_key_format == WriteFormat::text) {
-        output_data = std::string(key_data.begin(), key_data.end());
     } else {
         binary_mode = true;
     }

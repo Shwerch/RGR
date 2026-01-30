@@ -10,16 +10,16 @@ int main(int argc, const char** argv) {
 
     try {
 
-        Arguments arguments = parse_arguments(argc, argv);
-        check_arguments(arguments);
+        RawArguments raw_arguments = parse_arguments(argc, argv);
+        Arguments arguments = check_arguments(raw_arguments);
         std::vector<uint8_t> key = get_key(arguments);
         export_key(arguments, key);
         std::vector<uint8_t> input = get_input(arguments);
         // output = operation
         // export output
 
-        std::cout << "input: ";
-        for (int i : input) {
+        std::cout << "key: ";
+        for (int i : key) {
             std::cout << (unsigned int) i << " ";
         }
         std::cout << std::endl;

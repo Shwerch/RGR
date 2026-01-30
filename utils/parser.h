@@ -28,15 +28,31 @@ enum class Output {
 };
 
 enum class ReadFormat {
-    text,
     hex,
     binary
 };
 
 enum class WriteFormat {
-    text,
     hex,
     binary
+};
+
+struct RawArguments {
+    std::optional<Algorithm> algorithm = Algorithm::des;
+    std::optional<Mode> mode = Mode::encrypt;
+    std::optional<std::filesystem::path> input;
+    std::optional<std::filesystem::path> output;
+    std::optional<Input> input_format = Input::text;
+    std::optional<Output> output_format = Output::binary;
+    std::optional<std::filesystem::path> key;
+    std::optional<bool> generate_key = false;
+    std::optional<bool> read_key = false;
+    std::optional<bool> promt_key = false;
+    std::optional<ReadFormat> read_key_format = ReadFormat::binary;
+    std::optional<std::filesystem::path> save_key;
+    std::optional<bool> write_key = false;
+    std::optional<WriteFormat> write_key_format = WriteFormat::binary;
+    std::optional<bool> help = false;
 };
 
 struct Arguments {
@@ -77,19 +93,19 @@ Key Input:
   -g, --generate-key                          Generate a new random key.
   -r, --read-key                              Read key from stdin.
   -p, --promt-key                             Prompt for the key interactively on the console.
-  -R, --read-key-format {text,hex,binary}     Specify the input format of the key. [default: binary]
+  -R, --read-key-format {hex,binary}     Specify the input format of the key. [default: binary]
 
 Key Output:
   -S, --save-key <PATH>                       Save the generated key to a file.
   -w, --write-key                             Write the generated key to stdout.
-  -W, --write-key-format {text,hex,binary}    Specify the output format of the key. [default: binary]
+  -W, --write-key-format {hex,binary}    Specify the output format of the key. [default: binary]
 
 Optional:
   -h, --help                                  Show this help message and exit.
 )";
 
-Arguments parse_arguments(int argc, const char** argv);
-void check_arguments(const Arguments& args);
+RawArguments parse_arguments(int argc, const char** argv);
+Arguments check_arguments(const RawArguments& args);
 std::vector<uint8_t> get_key(const Arguments& args);
 void export_key(const Arguments& args, const std::vector<uint8_t>& key_data);
 std::vector<uint8_t> get_input(const Arguments& args);
