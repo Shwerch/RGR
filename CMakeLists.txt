@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
-project(Cryptum)
+project(Cryptum VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-include_directories(include)
 
 set(UTILS_SOURCES
         utils/filesystem.cpp
@@ -53,7 +51,6 @@ foreach(TARGET ${ALL_TARGETS})
         )
     else()
         target_compile_options(${TARGET} PUBLIC
-                -std=c++23
                 $<$<CONFIG:Release>:-O3>
                 -pedantic
                 -Wall
