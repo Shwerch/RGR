@@ -1,35 +1,8 @@
-#include "parser.hpp"
+#include "utils/parser.hpp"
 
 #include <iostream>
 #include <optional>
 #include <stdexcept>
-
-const char *HELP_MESSAGE = R"(usage: cryptum --algorithm <algorithm> --mode <mode> [OPTIONS]
-
-Uses encryption algorithms AES, DES and NGEA for data encryption and decryption.
-
-Required:
-  -a, --algorithm {des,aes,ngea}    The encryption algorithm used.
-  -m, --mode {encrypt,decrypt}      Operating mode.
-
-Input/Output Options:
-  -i, --input <PATH>                Input file path. If not provided, reads from stdin.
-  -o, --output <PATH>               Output file path. If not provided, writes to stdout.
-  -I, --text-input                  Specify the text format of the input data. If not provided, used binary format.
-  -O, --text-output                 Specify the text format of the output data. If not provided, used binary format.
-
-Key Input:
-  -k, --key <PATH>                  Path to the key file.
-  -g, --generate-key                Generate a new random key.
-  -r, --read-key                    Read key from stdin.
-
-Key Output:
-  -s, --save-key <PATH>             Save the generated key to a file.
-  -w, --write-key                   Write the generated key to stdout.
-
-Optional:
-  -h, --help                        Show this help message and exit.
-)";
 
 void print_help() {
 	std::cout << HELP_MESSAGE;
@@ -37,7 +10,7 @@ void print_help() {
 }
 
 Arguments parser(int argc, char **argv) {
-	if (argc == 1) {
+	if (argc < 2) {
 		print_help();
 	}
 
@@ -69,9 +42,9 @@ Arguments parser(int argc, char **argv) {
 			if (i + 1 >= argc)
 				throw std::runtime_error("Missing argument for --mode");
 			std::string val = argv[++i];
-			if (val == "encrypt")
+			if (val == "e" || val == "encrypt")
 				modeOpt = Mode::Encrypt;
-			else if (val == "decrypt")
+			else if (val == "d" || val == "decrypt")
 				modeOpt = Mode::Decrypt;
 			else
 				throw std::runtime_error("Invalid mode");
@@ -84,10 +57,6 @@ Arguments parser(int argc, char **argv) {
 			if (i + 1 >= argc)
 				throw std::runtime_error("Missing argument for --output");
 			args.outputPath = argv[++i];
-		} else if (arg == "-I" || arg == "--text-input") {
-			args.textInput = true;
-		} else if (arg == "-O" || arg == "--text-output") {
-			args.textOutput = true;
 		} else if (arg == "-k" || arg == "--key") {
 			if (i + 1 >= argc)
 				throw std::runtime_error("Missing argument for --key");
@@ -107,10 +76,12 @@ Arguments parser(int argc, char **argv) {
 		}
 	}
 
-	if (!algoSet)
+	if (!algoSet) {
 		throw std::runtime_error("Algorithm is required");
-	if (!modeSet)
+	}
+	if (!modeSet) {
 		throw std::runtime_error("Mode is required");
+	}
 
 	args.algorithm = algoOpt.value();
 	args.mode = modeOpt.value();
@@ -125,7 +96,7 @@ Arguments parser(int argc, char **argv) {
 
 	if (keyMethods != 1) {
 		throw std::runtime_error(
-			"Exactly one key source must be specified (--key, --generate-key, --read-key)");
+			"One command-line argument from the Key Input category must be specified.");
 	}
 
 	if (args.inputPath.empty() && args.readKey) {

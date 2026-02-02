@@ -1,5 +1,5 @@
-#include "ngea.hpp"
-#include "rand_utils.hpp"
+#include "ciphers/ngea/ngea.hpp"
+#include "utils/rand_utils.hpp"
 
 #include <cstring>
 #include <new>

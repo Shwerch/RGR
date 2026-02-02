@@ -1,5 +1,5 @@
-#include "aes.hpp"
-#include "rand_utils.hpp"
+#include "ciphers/aes/aes.hpp"
+#include "utils/rand_utils.hpp"
 
 #include <cstring>
 

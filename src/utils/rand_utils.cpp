@@ -1,4 +1,4 @@
-#include "rand_utils.hpp"
+#include "utils/rand_utils.hpp"
 
 #include <random>
 

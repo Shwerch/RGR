@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SRC_DIR="linux-build-release"
+SRC_DIR="build/release/linux"
 APP_NAME="cryptum"
 APP_DIR="/opt/$APP_NAME"
 BIN_LINK="/usr/local/bin/$APP_NAME"

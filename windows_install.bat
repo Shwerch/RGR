@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 set "APP_NAME=Cryptum"
 set "CRYPTUM_DIR=%LocalAppData%\%APP_NAME%"
-set "SRC_DIR=win-build-release"
+set "SRC_DIR=build\release\windows"
 
 cmake -S . -B "%SRC_DIR%" -G "Visual Studio 18 2026"
 if errorlevel 1 (
