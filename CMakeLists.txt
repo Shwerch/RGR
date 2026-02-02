@@ -20,13 +20,13 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(utils dl)
 endif()
 
-add_library(aes SHARED src/ciphers/aes/aes.cpp)
+add_library(aes SHARED src/ciphers/aes/aes.cpp src/ciphers/aes/aes_utils.cpp)
 target_link_libraries(aes utils)
 
-add_library(des SHARED src/ciphers/des/des.cpp)
+add_library(des SHARED src/ciphers/des/des.cpp src/ciphers/des/des_utils.cpp)
 target_link_libraries(des utils)
 
-add_library(ngea SHARED src/ciphers/ngea/ngea.cpp)
+add_library(ngea SHARED src/ciphers/ngea/ngea.cpp src/ciphers/ngea/ngea_utils.cpp)
 target_link_libraries(ngea utils)
 
 add_executable(cryptum src/main.cpp)
