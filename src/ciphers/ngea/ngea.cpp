@@ -15,7 +15,7 @@ uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t 
 		constexpr size_t block_size = 64;
 
 		*ciphertext_size = nonce_size + size;
-		*ciphertext_ptr = new (std::nothrow) uint8_t[*ciphertext_size];
+		*ciphertext_ptr = new uint8_t[*ciphertext_size];
 		*deleter_ptr = release_memory;
 
 		uint8_t nonce[nonce_size];
@@ -57,7 +57,7 @@ uint64_t decrypt(const uint8_t *ciphertext_ptr, const size_t size, const uint8_t
 		}
 
 		*plaintext_size = size - nonce_size;
-		*plaintext_ptr = new (std::nothrow) uint8_t[*plaintext_size];
+		*plaintext_ptr = new uint8_t[*plaintext_size];
 		*deleter_ptr = release_memory;
 
 		const uint8_t *nonce = ciphertext_ptr;
