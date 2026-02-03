@@ -37,13 +37,9 @@ int main(int argc, char **argv) {
 		case 0:
 			break;
 		case 1:
-			throw std::runtime_error(std::string("Invalid input data for ") +
-									 (args.mode == Mode::Encrypt ? "encryption" : "decryption") +
-									 " algorithm in DLL");
+			throw std::runtime_error("Invalid input data for algorithm in DLL");
 		default:
-			throw std::runtime_error(std::string("Unknown error happend in ") +
-									 (args.mode == Mode::Encrypt ? "encryption" : "decryption") +
-									 " algorithm in DLL");
+			throw std::runtime_error("Unknown error happend in algorithm in DLL");
 		}
 
 		std::vector<uint8_t> resultData(result_buffer, result_buffer + result_size);
