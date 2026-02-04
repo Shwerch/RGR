@@ -2,8 +2,6 @@
 #include "ciphers/ngea/ngea_utils.hpp"
 #include "utils/rand_utils.hpp"
 
-#include <new>
-
 uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t *key_ptr,
 				 uint8_t **ciphertext_ptr, size_t *ciphertext_size, Deleter *deleter_ptr) {
 	try {
