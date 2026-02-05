@@ -22,8 +22,8 @@ void cryptify(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
 	*b = std::rotl(*b, 7);
 }
 
-void cryptify_helper(uint32_t (*working_state)[16], uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
-	cryptify(working_state[a], working_state[b], working_state[c], working_state[d]);
+void cryptify_helper(uint32_t *working_state, uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+	cryptify(&working_state[a], &working_state[b], &working_state[c], &working_state[d]);
 }
 
 void ngea_process_block(const uint8_t *key_ptr, uint32_t counter, const uint8_t *nonce_ptr,
@@ -48,15 +48,15 @@ void ngea_process_block(const uint8_t *key_ptr, uint32_t counter, const uint8_t 
 	memcpy(working_state, initial_state, sizeof(initial_state));
 
 	for (int i = 0; i < 10; ++i) {
-		cryptify_helper(&working_state, 0, 4, 8, 12);
-		cryptify_helper(&working_state, 1, 5, 9, 13);
-		cryptify_helper(&working_state, 2, 6, 10, 14);
-		cryptify_helper(&working_state, 3, 7, 11, 15);
+		cryptify_helper(working_state, 0, 4, 8, 12);
+		cryptify_helper(working_state, 1, 5, 9, 13);
+		cryptify_helper(working_state, 2, 6, 10, 14);
+		cryptify_helper(working_state, 3, 7, 11, 15);
 
-		cryptify_helper(&working_state, 0, 5, 10, 15);
-		cryptify_helper(&working_state, 1, 6, 11, 12);
-		cryptify_helper(&working_state, 2, 7, 8, 13);
-		cryptify_helper(&working_state, 3, 4, 9, 14);
+		cryptify_helper(working_state, 0, 5, 10, 15);
+		cryptify_helper(working_state, 1, 6, 11, 12);
+		cryptify_helper(working_state, 2, 7, 8, 13);
+		cryptify_helper(working_state, 3, 4, 9, 14);
 	}
 
 	uint8_t keystream_block[64];
