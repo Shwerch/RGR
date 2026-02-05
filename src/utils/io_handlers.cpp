@@ -4,7 +4,7 @@
 #include <random>
 #include <stdexcept>
 
-std::vector<uint8_t> generateRandomKey(size_t length) {
+std::vector<uint8_t> generate_random_key(size_t length) {
 	std::vector<uint8_t> key(length);
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -15,7 +15,7 @@ std::vector<uint8_t> generateRandomKey(size_t length) {
 	return key;
 }
 
-size_t getKeySize(Algorithm algo) {
+size_t get_key_size(Algorithm algo) {
 	switch (algo) {
 	case Algorithm::DES:
 		return 8;
@@ -28,41 +28,41 @@ size_t getKeySize(Algorithm algo) {
 	}
 }
 
-std::vector<uint8_t> getKey(const Arguments &args) {
+std::vector<uint8_t> get_key(const Arguments &args) {
 	if (!args.keyPath.empty()) {
-		return readFile(args.keyPath);
+		return read_file(args.keyPath);
 	}
 
 	if (args.readKey) {
-		return readFromStdin();
+		return read_from_stdin();
 	}
 
 	if (args.generateKey) {
-		return generateRandomKey(getKeySize(args.algorithm));
+		return generate_random_key(get_key_size(args.algorithm));
 	}
 
 	throw std::runtime_error("No key source specified");
 }
 
-void saveKey(const Arguments &args, const std::vector<uint8_t> &key) {
+void save_key(const Arguments &args, const std::vector<uint8_t> &key) {
 	if (!args.saveKeyPath.empty()) {
-		writeFile(args.saveKeyPath, key);
+		write_file(args.saveKeyPath, key);
 	} else if (args.writeKey) {
-		writeToStdout(key);
+		write_to_stdout(key);
 	}
 }
 
-std::vector<uint8_t> getInputData(const Arguments &args) {
+std::vector<uint8_t> get_input_data(const Arguments &args) {
 	if (!args.inputPath.empty()) {
-		return readFile(args.inputPath);
+		return read_file(args.inputPath);
 	}
-	return readFromStdin();
+	return read_from_stdin();
 }
 
-void writeOutputData(const Arguments &args, const std::vector<uint8_t> &data) {
+void write_output_data(const Arguments &args, const std::vector<uint8_t> &data) {
 	if (!args.outputPath.empty()) {
-		writeFile(args.outputPath, data);
+		write_file(args.outputPath, data);
 	} else {
-		writeToStdout(data);
+		write_to_stdout(data);
 	}
 }

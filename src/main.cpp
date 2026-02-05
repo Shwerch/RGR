@@ -18,9 +18,9 @@ int main(int argc, char **argv) {
 #endif
 	try {
 		Arguments args = parser(argc, argv);
-		std::vector<uint8_t> key = getKey(args);
-		saveKey(args, key);
-		std::vector<uint8_t> inputData = getInputData(args);
+		std::vector<uint8_t> key = get_key(args);
+		save_key(args, key);
+		std::vector<uint8_t> inputData = get_input_data(args);
 
 		Library *lib = new Library{args.algorithm == Algorithm::DES	  ? "des"
 								   : args.algorithm == Algorithm::AES ? "aes"
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 		std::vector<uint8_t> resultData(result_buffer, result_buffer + result_size);
 		result_deleter(result_buffer);
 		delete lib;
-		writeOutputData(args, resultData);
+		write_output_data(args, resultData);
 	} catch (const std::runtime_error &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 		return 1;

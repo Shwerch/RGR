@@ -1,24 +1,29 @@
 #include "ciphers/ngea/ngea_utils.hpp"
 
-inline uint32_t rotl(uint32_t x, int n) { return (x << n) | (x >> (32 - n)); }
+#include <bit>
+#include <cstdint>
 
 inline uint32_t load32_le(const uint8_t *p) {
 	return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
 }
 
-void QuarterRound(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
+void cryptify(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
 	*a += *b;
 	*d ^= *a;
-	*d = rotl(*d, 23);
+	*d = std::rotl(*d, 23);
 	*c += *d;
 	*b ^= *c;
-	*b = rotl(*b, 19);
+	*b = std::rotl(*b, 19);
 	*a += *b;
 	*d ^= *a;
-	*d = rotl(*d, 13);
+	*d = std::rotl(*d, 13);
 	*c += *d;
 	*b ^= *c;
-	*b = rotl(*b, 7);
+	*b = std::rotl(*b, 7);
+}
+
+void cryptify_helper(uint32_t (*working_state)[16], uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+	cryptify(working_state[a], working_state[b], working_state[c], working_state[d]);
 }
 
 void ngea_process_block(const uint8_t *key_ptr, uint32_t counter, const uint8_t *nonce_ptr,
@@ -43,15 +48,15 @@ void ngea_process_block(const uint8_t *key_ptr, uint32_t counter, const uint8_t 
 	memcpy(working_state, initial_state, sizeof(initial_state));
 
 	for (int i = 0; i < 10; ++i) {
-		QuarterRound(&working_state[0], &working_state[4], &working_state[8], &working_state[12]);
-		QuarterRound(&working_state[1], &working_state[5], &working_state[9], &working_state[13]);
-		QuarterRound(&working_state[2], &working_state[6], &working_state[10], &working_state[14]);
-		QuarterRound(&working_state[3], &working_state[7], &working_state[11], &working_state[15]);
+		cryptify_helper(&working_state, 0, 4, 8, 12);
+		cryptify_helper(&working_state, 1, 5, 9, 13);
+		cryptify_helper(&working_state, 2, 6, 10, 14);
+		cryptify_helper(&working_state, 3, 7, 11, 15);
 
-		QuarterRound(&working_state[0], &working_state[5], &working_state[10], &working_state[15]);
-		QuarterRound(&working_state[1], &working_state[6], &working_state[11], &working_state[12]);
-		QuarterRound(&working_state[2], &working_state[7], &working_state[8], &working_state[13]);
-		QuarterRound(&working_state[3], &working_state[4], &working_state[9], &working_state[14]);
+		cryptify_helper(&working_state, 0, 5, 10, 15);
+		cryptify_helper(&working_state, 1, 6, 11, 12);
+		cryptify_helper(&working_state, 2, 7, 8, 13);
+		cryptify_helper(&working_state, 3, 4, 9, 14);
 	}
 
 	uint8_t keystream_block[64];

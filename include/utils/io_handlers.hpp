@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <vector>
 
-std::vector<uint8_t> getKey(const Arguments &args);
-void saveKey(const Arguments &args, const std::vector<uint8_t> &key);
+std::vector<uint8_t> get_key(const Arguments &args);
+void save_key(const Arguments &args, const std::vector<uint8_t> &key);
 
-std::vector<uint8_t> getInputData(const Arguments &args);
-void writeOutputData(const Arguments &args, const std::vector<uint8_t> &data);
+std::vector<uint8_t> get_input_data(const Arguments &args);
+void write_output_data(const Arguments &args, const std::vector<uint8_t> &data);
