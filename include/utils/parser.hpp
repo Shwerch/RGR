@@ -16,6 +16,7 @@ struct Arguments {
 	bool readKey = false;
 	std::string saveKeyPath;
 	bool writeKey = false;
+	bool manualInput = false;
 };
 
 const auto HELP_MESSAGE = R"(
@@ -30,6 +31,7 @@ Required:
 Input/Output Options:
   -i, --input <PATH>                Input file path. If not provided, reads from stdin.
   -o, --output <PATH>               Output file path. If not provided, writes to stdout.
+  --manual-input                    Baby mode for the lazy tester. Blocks stdin and stdout.
 
 Key Input:
   -k, --key <PATH>                  Path to the key file.

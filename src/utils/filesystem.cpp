@@ -24,9 +24,13 @@ void write_file(const std::string &path, const std::vector<uint8_t> &data) {
 
 std::vector<uint8_t> read_from_stdin() {
 	std::cin.sync_with_stdio(false);
-	std::cin >> std::noskipws;
-	return std::vector<uint8_t>((std::istream_iterator<char>(std::cin)),
-								std::istream_iterator<char>());
+	std::cin.tie(NULL);
+
+	std::istreambuf_iterator<char> begin(std::cin);
+	std::istreambuf_iterator<char> end;
+
+	return std::vector<uint8_t>(begin, end);
+	;
 }
 
 void write_to_stdout(const std::vector<uint8_t> &data) {

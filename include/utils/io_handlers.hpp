@@ -10,3 +10,5 @@ void save_key(const Arguments &args, const std::vector<uint8_t> &key);
 
 std::vector<uint8_t> get_input_data(const Arguments &args);
 void write_output_data(const Arguments &args, const std::vector<uint8_t> &data);
+
+std::vector<uint8_t> read_string_as_bytes();

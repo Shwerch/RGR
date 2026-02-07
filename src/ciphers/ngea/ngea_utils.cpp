@@ -3,10 +3,6 @@
 #include <bit>
 #include <cstdint>
 
-inline uint32_t load32_le(const uint8_t *p) {
-	return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
-}
-
 void cryptify(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
 	*a += *b;
 	*d ^= *a;
@@ -32,10 +28,10 @@ void ngea_process_block(const uint8_t *key_ptr, uint32_t counter, const uint8_t 
 	uint32_t initial_state[16];
 	uint32_t working_state[16];
 
-	initial_state[0] = 0x61707865;
-	initial_state[1] = 0x3320646e;
-	initial_state[2] = 0x79622d32;
-	initial_state[3] = 0x6b206574;
+	initial_state[0] = 0x6e6f654e;
+	initial_state[1] = 0x656e6547;
+	initial_state[2] = 0x43736973;
+	initial_state[3] = 0x74707972;
 
 	for (int i = 0; i < 8; ++i) {
 		initial_state[4 + i] = load32_le(key_ptr + i * 4);
@@ -59,15 +55,15 @@ void ngea_process_block(const uint8_t *key_ptr, uint32_t counter, const uint8_t 
 		cryptify_helper(working_state, 3, 4, 9, 14);
 	}
 
-	uint8_t keystream_block[64];
-	uint32_t *keystream_block_32 = reinterpret_cast<uint32_t *>(keystream_block);
+	uint8_t keystream_bytes[64];
 
 	for (int i = 0; i < 16; ++i) {
-		keystream_block_32[i] = working_state[i] + initial_state[i];
+		uint32_t z = working_state[i] + initial_state[i];
+		store32_le(&keystream_bytes[i * 4], z);
 	}
 
 	for (size_t i = 0; i < block_size; ++i) {
-		output_block_ptr[i] = input_block_ptr[i] ^ keystream_block[i];
+		output_block_ptr[i] = input_block_ptr[i] ^ keystream_bytes[i];
 	}
 }
 

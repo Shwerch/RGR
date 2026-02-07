@@ -1,8 +1,12 @@
 #include "utils/io_handlers.hpp"
 #include "utils/filesystem.hpp"
 
+#include <cstdint>
+#include <iostream>
 #include <random>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 std::vector<uint8_t> generate_random_key(size_t length) {
 	std::vector<uint8_t> key(length);
@@ -53,6 +57,9 @@ void save_key(const Arguments &args, const std::vector<uint8_t> &key) {
 }
 
 std::vector<uint8_t> get_input_data(const Arguments &args) {
+	if (args.manualInput) {
+		return read_string_as_bytes();
+	}
 	if (!args.inputPath.empty()) {
 		return read_file(args.inputPath);
 	}
@@ -65,4 +72,17 @@ void write_output_data(const Arguments &args, const std::vector<uint8_t> &data) 
 	} else {
 		write_to_stdout(data);
 	}
+}
+
+std::vector<uint8_t> read_string_as_bytes() {
+	std::cout << "Enter input string: ";
+	std::string input;
+	std::getline(std::cin, input);
+	std::string view(input);
+	std::vector<uint8_t> bytes;
+	bytes.reserve(view.size());
+	for (char c : view) {
+		bytes.push_back(static_cast<uint8_t>(c));
+	}
+	return bytes;
 }

@@ -92,7 +92,9 @@ Arguments parser(int argc, char **argv) {
 		} else if (arg == "-w" || arg == "--write-key") {
 
 			args.writeKey = true;
+		} else if (arg == "--manual-input") {
 
+			args.manualInput = true;
 		} else {
 			throw std::runtime_error("Unknown argument: " + arg);
 		}
@@ -122,10 +124,32 @@ Arguments parser(int argc, char **argv) {
 	if (keyMethods != 1) {
 		throw std::runtime_error("One argument from the Key Input category must be specified.");
 	}
-	if (args.inputPath.empty() && args.readKey) {
+
+	int stdin_users = 0;
+	if (args.inputPath.empty() && !args.manualInput) {
+		stdin_users++;
+	}
+	if (args.readKey) {
+		stdin_users++;
+	}
+	if (args.manualInput) {
+		stdin_users++;
+	}
+	if (stdin_users > 1) {
 		throw std::runtime_error("Cannot read both input and key from stdin");
 	}
-	if (args.outputPath.empty() && args.writeKey) {
+
+	int stdout_users = 0;
+	if (args.outputPath.empty()) {
+		stdout_users++;
+	}
+	if (args.writeKey) {
+		stdout_users++;
+	}
+	if (args.manualInput) {
+		stdout_users++;
+	}
+	if (stdout_users > 1) {
 		throw std::runtime_error("Cannot write both output and key to stdout");
 	}
 

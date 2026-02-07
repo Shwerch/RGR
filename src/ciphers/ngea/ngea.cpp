@@ -5,12 +5,12 @@
 uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t *key_ptr,
 				 uint8_t **ciphertext_ptr, size_t *ciphertext_size, Deleter *deleter_ptr) {
 	try {
+		constexpr size_t nonce_size = 12;
+		constexpr size_t block_size = 64;
+
 		if (!plaintext_ptr || !key_ptr || !ciphertext_ptr || !ciphertext_size || !deleter_ptr) {
 			return 1;
 		}
-
-		constexpr size_t nonce_size = 12;
-		constexpr size_t block_size = 64;
 
 		*ciphertext_size = nonce_size + size;
 		*ciphertext_ptr = new uint8_t[*ciphertext_size];
