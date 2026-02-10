@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -85,4 +86,11 @@ std::vector<uint8_t> read_string_as_bytes() {
 		bytes.push_back(static_cast<uint8_t>(c));
 	}
 	return bytes;
+}
+
+std::optional<std::vector<uint8_t>> get_iv(const Arguments &args) {
+	if (args.iv.empty()) {
+		return std::nullopt;
+	}
+	return read_file(args.iv);
 }

@@ -31,4 +31,5 @@ Function Library::get_function(const std::string &func) const {
 	}
 	return function;
 }
+
 Library::~Library() { close_lib(handle); }

@@ -3,7 +3,7 @@
 #include "utils/rand_utils.hpp"
 
 uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t *key_ptr,
-				 uint8_t **ciphertext_ptr, size_t *ciphertext_size, Deleter *deleter_ptr) {
+				 uint8_t **ciphertext_ptr, size_t *ciphertext_size, Deleter *deleter_ptr, uint8_t *fixed_iv) {
 	try {
 		constexpr size_t nonce_size = 12;
 		constexpr size_t block_size = 64;
@@ -17,7 +17,12 @@ uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t 
 		*deleter_ptr = release_memory;
 
 		uint8_t nonce[nonce_size];
-		random_array(nonce);
+		if (fixed_iv == nullptr) {
+			random_array(nonce);
+		} else {
+			memcpy(nonce, fixed_iv, 12);
+		}
+
 		memcpy(*ciphertext_ptr, nonce, nonce_size);
 
 		uint8_t *out_ptr = *ciphertext_ptr + nonce_size;
@@ -44,7 +49,7 @@ uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t 
 }
 
 uint64_t decrypt(const uint8_t *ciphertext_ptr, const size_t size, const uint8_t *key_ptr,
-				 uint8_t **plaintext_ptr, size_t *plaintext_size, Deleter *deleter_ptr) {
+				 uint8_t **plaintext_ptr, size_t *plaintext_size, Deleter *deleter_ptr, uint8_t *fixed_iv) {
 	try {
 		constexpr size_t nonce_size = 12;
 		constexpr size_t block_size = 64;

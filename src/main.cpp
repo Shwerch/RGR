@@ -3,6 +3,7 @@
 #include "utils/parser.hpp"
 
 #include <iostream>
+#include <optional>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -21,6 +22,7 @@ int main(int argc, char **argv) {
 		std::vector<uint8_t> key = get_key(args);
 		save_key(args, key);
 		std::vector<uint8_t> inputData = get_input_data(args);
+		const std::optional<std::vector<uint8_t>> iv = get_iv(args);
 
 		Library *lib = new Library{args.algorithm == Algorithm::DES	  ? "des"
 								   : args.algorithm == Algorithm::AES ? "aes"
@@ -31,7 +33,7 @@ int main(int argc, char **argv) {
 		size_t result_size = 0;
 		Deleter result_deleter = nullptr;
 		uint64_t result = func(inputData.data(), inputData.size(), key.data(), &result_buffer,
-							   &result_size, &result_deleter);
+							   &result_size, &result_deleter, (iv.has_value()) ? iv.value().data() : nullptr);
 
 		switch (result) {
 		case 0:
