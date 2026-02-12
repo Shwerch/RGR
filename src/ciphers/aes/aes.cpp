@@ -4,7 +4,7 @@
 #include <cstring>
 
 uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t *key_ptr,
-				 uint8_t **ciphertext_ptr, size_t *ciphertext_size, Deleter *deleter_ptr, uint8_t *fixed_iv) {
+				 uint8_t **ciphertext_ptr, size_t *ciphertext_size, Deleter *deleter_ptr) {
 	try {
 		if (!plaintext_ptr || !key_ptr || !ciphertext_ptr || !ciphertext_size || !deleter_ptr) {
 			return 1;
@@ -14,11 +14,7 @@ uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t 
 		uint8_t *buffer = new uint8_t[total_size];
 
 		uint8_t iv[16];
-		if (fixed_iv == nullptr) {
-			random_array(iv);
-		} else {
-			memcpy(iv, fixed_iv, 16);
-		}
+		random_array(iv);
 
 		std::memcpy(buffer, iv, 16);
 
@@ -34,7 +30,7 @@ uint64_t encrypt(const uint8_t *plaintext_ptr, const size_t size, const uint8_t 
 }
 
 uint64_t decrypt(const uint8_t *ciphertext_ptr, const size_t size, const uint8_t *key_ptr,
-				 uint8_t **plaintext_ptr, size_t *plaintext_size, Deleter *deleter_ptr, uint8_t *fixed_iv) {
+				 uint8_t **plaintext_ptr, size_t *plaintext_size, Deleter *deleter_ptr) {
 	try {
 		if (!ciphertext_ptr || !key_ptr || !plaintext_ptr || !plaintext_size || !deleter_ptr ||
 			size < 16) {

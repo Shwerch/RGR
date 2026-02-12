@@ -17,7 +17,6 @@ struct Arguments {
 	std::string saveKeyPath;
 	bool writeKey = false;
 	bool manualInput = false;
-  std::string iv;
 };
 
 const auto HELP_MESSAGE = R"(

@@ -22,7 +22,7 @@
 typedef void (*Deleter)(uint8_t *);
 using Function = uint64_t (*)(const uint8_t *plaintext_ptr, const size_t size,
 							  const uint8_t *key_ptr, uint8_t **ciphertext_ptr,
-							  size_t *ciphertext_size, Deleter *deleter_ptr, const uint8_t* iv);
+							  size_t *ciphertext_size, Deleter *deleter_ptr);
 
 struct Library {
   private:

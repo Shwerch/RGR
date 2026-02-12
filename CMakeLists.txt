@@ -60,6 +60,7 @@ foreach(TARGET ${ALL_TARGETS})
                 -pedantic
                 -Wall
                 -Wextra
+                -Werror
         )
     endif()
 endforeach()

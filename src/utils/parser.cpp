@@ -95,12 +95,6 @@ Arguments parser(int argc, char **argv) {
 		} else if (arg == "--manual-input") {
 
 			args.manualInput = true;
-		} else if (arg == "--iv") {
-			if (i + 1 >= argc) {
-				throw std::runtime_error("Missing value for input argument");
-			}
-
-			args.iv = argv[++i];
 		} else {
 			throw std::runtime_error("Unknown argument: " + arg);
 		}
